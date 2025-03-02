@@ -1,4 +1,4 @@
-# StudyVerse Online Education Platform (MERN Web App) [Website Link](https://StudyVerse-frontend-eta-gray.vercel.app/)
+# StudyVerse Online Education Platform (MERN Web App) [Website Link](https://edify.lsanalab.xyz)
 
 ## Project Description
 
