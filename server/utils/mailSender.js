@@ -3,25 +3,26 @@ const nodemailer = require("nodemailer");
 const mailSender = async (email, title, body) => {
     try {
         let transporter = nodemailer.createTransport({
-            host: process.env.MAIL_HOST,  // SMTP server host
-            port: process.env.MAIL_PORT,  // Specify the SMTP port (e.g., 587 or 465)
-            secure: process.env.MAIL_PORT === '465',  // Set to true if you're using port 465 (for SSL)
+            host: process.env.MAIL_HOST,
+            port: process.env.MAIL_PORT,
+            secure: process.env.MAIL_PORT === '465',
             auth: {
-                user: process.env.MAIL_USER,
-                pass: process.env.MAIL_PASS,
-            }
+                user: process.env.MAIL_USER,  
+                pass: process.env.MAIL_PASS,  
+            },
         });
 
         let info = await transporter.sendMail({
-            from: 'ELearning || Llywellyn Sana',
-            to: `${email}`,
-            subject: `${title}`,
-            html: `${body}`,
+            from: 'ELearning || Llywellyn Sana',  // From address
+            to: email,  // Recipient email
+            subject: title,  // Subject
+            html: body,  // Email body (HTML format)
         });
-        console.log(info);
+
+        console.log("Email sent:", info);  // Logs email send info
         return info;
     } catch (error) {
-        console.log(error.message);
+        console.log("Error sending email:", error.message);  // Logs any error that occurs
     }
 };
 
