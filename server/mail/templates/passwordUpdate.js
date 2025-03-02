@@ -56,7 +56,7 @@ exports.passwordUpdated = (email, name) => {
     <body>
         <div class="container">
             <a href="https://edify.lsanalab.xyz"><img class="logo"
-                    src="https://webf.lsanalab.xyz/favicon.ico" alt="Edify Logo"></a>
+                    src="https://webf.lsanalab.xyz/logo.png" alt="Edify Logo"></a>
             <div class="message">Password Update Confirmation</div>
             <div class="body">
                 <p>Hey ${name},</p>
