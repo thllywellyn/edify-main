@@ -2,9 +2,14 @@ const express = require("express");
 const router = express.Router();
 
 // Ensure the correct file path (check for case sensitivity in the filename)
-const { capturePayment, verifyPayment, sendPaymentSuccessEmail } = require("../controllers/Payments");
+// const { capturePayment, verifyPayment, sendPaymentSuccessEmail } = require("../controllers/Payments");
 
 const { auth, isInstructor, isStudent, isAdmin } = require("../middlewares/auth");
+const paymentsController = require("../controllers/payments");
+router.post("/capturePayment", auth, isStudent, paymentsController.capturePayment);
+router.post("/verifyPayment", auth, isStudent, paymentsController.verifyPayment);
+
+
 
 // Define payment routes
 // router.post("/capturePayment", auth, isStudent, capturePayment);
