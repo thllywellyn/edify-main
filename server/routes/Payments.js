@@ -5,7 +5,7 @@ const router = express.Router();
 // const { capturePayment, verifyPayment, sendPaymentSuccessEmail } = require("../controllers/Payments");
 
 const { auth, isInstructor, isStudent, isAdmin } = require("../middlewares/auth");
-const paymentsController = require("../controllers/payments");
+const paymentsController = require("../controllers/Payments");
 router.post("/capturePayment", auth, isStudent, paymentsController.capturePayment);
 router.post("/verifyPayment", auth, isStudent, paymentsController.verifyPayment);
 
