@@ -67,7 +67,7 @@ exports.verifyPayment = async (req, res) => {
         }
 
         await enrollStudents(courses, userId);
-        await sendPaymentSuccessEmail(userId, razorpay_order_id, razorpay_payment_id, courses);
+        await exports.sendPaymentSuccessEmail({ userId, orderId: razorpay_order_id, paymentId: razorpay_payment_id, courses });
 
         return res.status(200).json({ success: true, message: "Payment verified and enrolled" });
     } catch (error) {
@@ -78,61 +78,30 @@ exports.verifyPayment = async (req, res) => {
 
 // Enroll Students
 const enrollStudents = async (courses, userId) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
     try {
         for (const courseId of courses) {
             const enrolledCourse = await Course.findByIdAndUpdate(
                 courseId,
                 { $addToSet: { studentsEnrolled: userId } },
-                { new: true, session }
+                { new: true }
             );
 
             if (!enrolledCourse) throw new Error(`Course not found: ${courseId}`);
 
-            const courseProgress = await CourseProgress.create([{ 
-                courseID: courseId, 
-                userId, 
-                completedVideos: [] 
-            }], { session });
+            const courseProgress = await CourseProgress.create({ courseID: courseId, userId, completedVideos: [] });
 
             await User.findByIdAndUpdate(userId, {
-                $addToSet: { courses: courseId, courseProgress: courseProgress[0]._id },
-            }, { session });
-
-            await sendEnrollmentEmail(userId, enrolledCourse.courseName);
+                $addToSet: { courses: courseId, courseProgress: courseProgress._id },
+            });
         }
-
-        await session.commitTransaction();
-        session.endSession();
     } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
         console.error("Error enrolling students:", error);
         throw error;
     }
 };
 
-// Send Enrollment Email
-const sendEnrollmentEmail = async (userId, courseName) => {
-    try {
-        const user = await User.findById(userId);
-        if (!user) throw new Error("User not found");
-
-        await mailSender(
-            user.email,
-            `Successfully Enrolled in ${courseName}`,
-            courseEnrollmentEmail(courseName, user.firstName)
-        );
-
-        console.log(`Enrollment email sent to ${user.email}`);
-    } catch (error) {
-        console.error("Error sending enrollment email:", error);
-    }
-};
-
 // Send Payment Success Email
-const sendPaymentSuccessEmail = async (userId, orderId, paymentId, courses) => {
+exports.sendPaymentSuccessEmail = async ({ userId, orderId, paymentId, courses }) => {
     try {
         const enrolledStudent = await User.findById(userId);
         if (!enrolledStudent) throw new Error("User not found");
@@ -149,48 +118,5 @@ const sendPaymentSuccessEmail = async (userId, orderId, paymentId, courses) => {
         console.log(`Payment success email sent to ${enrolledStudent.email}`);
     } catch (error) {
         console.error("Error sending payment success email:", error);
-    }
-};
-
-// Verify Razorpay Signature (Webhook)
-exports.verifySignature = async (req, res) => {
-    try {
-        const webhookSecret = "12345678";
-        const signature = req.headers["x-razorpay-signature"];
-
-        const shasum = crypto.createHmac("sha256", webhookSecret);
-        shasum.update(JSON.stringify(req.body));
-        const digest = shasum.digest("hex");
-
-        if (signature !== digest) {
-            return res.status(400).json({ success: false, message: "Invalid signature" });
-        }
-
-        console.log("Payment Authorized");
-
-        const { courseId, userId } = req.body.payload.payment.entity.notes;
-
-        const enrolledCourse = await Course.findByIdAndUpdate(
-            courseId,
-            { $addToSet: { studentsEnrolled: userId } },
-            { new: true }
-        );
-
-        if (!enrolledCourse) {
-            return res.status(500).json({ success: false, message: "Course not found" });
-        }
-
-        await User.findByIdAndUpdate(userId, { $addToSet: { courses: courseId } });
-
-        await mailSender(
-            enrolledCourse.email,
-            "Congratulations from CodeHelp",
-            "Congratulations, you are onboarded into a new CodeHelp Course"
-        );
-
-        return res.status(200).json({ success: true, message: "Signature verified and course added" });
-    } catch (error) {
-        console.error("Error verifying signature:", error);
-        return res.status(500).json({ success: false, message: "Signature verification failed" });
     }
 };
