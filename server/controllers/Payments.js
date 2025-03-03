@@ -7,6 +7,13 @@ const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail")
 const CourseProgress = require("../models/CourseProgress");
 const crypto = require("crypto");
 
+const express = require("express");
+const router = express.Router();
+const { capturePayment, verifyPayment } = require("../controllers/payment"); // Ensure correct path
+
+
+
+
 // Capture Payment
 exports.capturePayment = async (req, res) => {
     try {
@@ -55,6 +62,50 @@ exports.verifyPayment = async (req, res) => {
 };
 
 // Enroll Students
-async function enrollStudents(courses, userId) {
-    // Enrollment logic...
-}
+const enrollStudents = async (courses, userId) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        const user = await User.findById(userId).session(session);
+        if (!user) throw new Error("User not found");
+
+        for (const courseId of courses) {
+            const course = await Course.findByIdAndUpdate(
+                courseId,
+                { $push: { studentsEnrolled: userId } },
+                { new: true, session }
+            );
+            if (!course) throw new Error(`Course not found: ${courseId}`);
+
+            const courseProgress = await CourseProgress.create([{ 
+                courseID: courseId, 
+                userId: userId, 
+                completedVideos: [] 
+            }], { session });
+
+            await User.findByIdAndUpdate(userId, {
+                $push: { courses: courseId, courseProgress: courseProgress[0]._id },
+            }, { session });
+
+            await mailSender(
+                user.email,
+                `Successfully Enrolled in ${course.courseName}`,
+                courseEnrollmentEmail(course.courseName, user.firstName)
+            );
+        }
+        
+        await session.commitTransaction();
+        session.endSession();
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        console.error("Error enrolling students:", error);
+        throw new Error(error.message);
+    }
+};
+
+router.post("/capture", capturePayment);
+router.post("/verify", verifyPayment);
+
+module.exports = router;
+
