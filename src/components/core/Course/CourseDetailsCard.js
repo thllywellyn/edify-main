@@ -1,121 +1,59 @@
-import React from "react"
-import copy from "copy-to-clipboard"
-import { toast } from "react-hot-toast"
-import { BsFillCaretRightFill } from "react-icons/bs"
-import { FaShareSquare } from "react-icons/fa"
-import { useDispatch, useSelector } from "react-redux"
-import { useNavigate } from "react-router-dom"
+import { useState, useCallback, useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { addToCart } from "../../../redux/slices/cartSlice";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
-import { addToCart } from "../../../slices/cartSlice"
-import { ACCOUNT_TYPE } from "../../../utils/constants"
+const CourseDetailsCard = ({ course }) => {
+  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
 
+  const isInstructor = useMemo(() => user?.accountType === "Instructor", [user]);
+  const isEnrolled = useMemo(() => course?.studentsEnrolled?.includes(user?._id), [course, user]);
 
-function CourseDetailsCard({ course, setConfirmationModal, handleBuyCourse }) {
-  const { user } = useSelector((state) => state.profile)
-  const { token } = useSelector((state) => state.auth)
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const handleAddToCart = useCallback(() => {
+    if (!user) return toast.error("Please login to add to cart");
+    dispatch(addToCart(course));
+    toast.success("Added to cart");
+  }, [dispatch, user, course]);
 
-  const {
-    thumbnail: ThumbnailImage,
-    price: CurrentPrice,
-    _id: courseId,
-  } = course
+  const handleBuyNow = useCallback(() => {
+    if (!user) return toast.error("Please login to purchase");
+    navigate(`/checkout/${course._id}`);
+  }, [navigate, user, course]);
 
-  const handleShare = () => {
-    copy(window.location.href)
-    toast.success("Link copied to clipboard")
-  }
-
-  const handleAddToCart = () => {
-    if (user && user?.accountType === ACCOUNT_TYPE.INSTRUCTOR) {
-      toast.error("You are an Instructor. You can't buy a course.")
-      return
-    }
-    if (token) {
-      dispatch(addToCart(course))
-      return
-    }
-    setConfirmationModal({
-      text1: "You are not logged in!",
-      text2: "Please login to add To Cart",
-      btn1Text: "Login",
-      btn2Text: "Cancel",
-      btn1Handler: () => navigate("/login"),
-      btn2Handler: () => setConfirmationModal(null),
-    })
-  }
-
-  // console.log("Student already enrolled ", course?.studentsEnrolled, user?._id)
+  const handleCopyLink = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    toast.success("Course link copied!");
+  }, []);
 
   return (
-    <>
-      <div
-        className={`flex flex-col gap-4 rounded-md bg-richblack-700 p-4 text-richblack-5`}
-      >
-        {/* Course Image */}
-        <img
-          src={ThumbnailImage}
-          alt={course?.courseName}
-          className="max-h-[300px] min-h-[180px] w-[400px] overflow-hidden rounded-2xl object-cover md:max-w-full"
-        />
+    <div className="bg-white shadow-md p-4 rounded-md">
+      <img src={course?.thumbnail} alt="Course Thumbnail" className="w-full h-40 object-cover rounded-md" />
+      <h3 className="text-xl font-semibold mt-2">{course?.title}</h3>
+      <p className="text-lg font-bold mt-2">₹ {course?.price}</p>
+      {isEnrolled ? (
+        <button onClick={() => navigate("/dashboard/enrolled-courses")} className="w-full bg-green-500 text-white py-2 mt-3 rounded-md">
+          Go to Course
+        </button>
+      ) : !isInstructor ? (
+        <>
+          <button onClick={handleBuyNow} className="w-full bg-blue-600 text-white py-2 mt-3 rounded-md">
+            Buy Now
+          </button>
+          <button onClick={handleAddToCart} className="w-full bg-gray-200 text-black py-2 mt-2 rounded-md">
+            Add to Cart
+          </button>
+        </>
+      ) : null}
+      <button onClick={handleCopyLink} className="w-full bg-gray-100 text-black py-2 mt-2 rounded-md">
+        {copied ? "Copied!" : "Share"}
+      </button>
+    </div>
+  );
+};
 
-        <div className="px-4">
-          <div className="space-x-3 pb-4 text-3xl font-semibold">
-            Rs. {CurrentPrice}
-          </div>
-          <div className="flex flex-col gap-4">
-            <button
-              className="yellowButton"
-              onClick={
-                user && course?.studentsEnrolled.includes(user?._id)
-                  ? () => navigate("/dashboard/enrolled-courses")
-                  : handleBuyCourse
-              }
-            >
-              {user && course?.studentsEnrolled.includes(user?._id)
-                ? "Go To Course"
-                : "Buy Now"}
-            </button>
-            {(!user || !course?.studentsEnrolled.includes(user?._id)) && (
-              <button onClick={handleAddToCart} className="blackButton">
-                Add to Cart
-              </button>
-            )}
-          </div>
-          <div>
-            <p className="pb-3 pt-6 text-center text-sm text-richblack-25">
-              30-Day Money-Back Guarantee
-            </p>
-          </div>
-
-          <div className={``}>
-            <p className={`my-2 text-xl font-semibold `}>
-              This Course Includes :
-            </p>
-            <div className="flex flex-col gap-3 text-sm text-caribbeangreen-100">
-              {course?.instructions?.map((item, i) => {
-                return (
-                  <p className={`flex gap-2`} key={i}>
-                    <BsFillCaretRightFill />
-                    <span>{item}</span>
-                  </p>
-                )
-              })}
-            </div>
-          </div>
-          <div className="text-center">
-            <button
-              className="mx-auto flex items-center gap-2 py-6 text-yellow-100 "
-              onClick={handleShare}
-            >
-              <FaShareSquare size={15} /> Share
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-}
-
-export default CourseDetailsCard
+export default CourseDetailsCard;
