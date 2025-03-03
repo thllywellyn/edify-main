@@ -7,10 +7,6 @@ const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail")
 const CourseProgress = require("../models/CourseProgress");
 const crypto = require("crypto");
 
-const express = require("express");
-const router = express.Router();
-const { capturePayment, verifyPayment } = require("../controllers/payment"); // Ensure correct path
-
 
 
 
@@ -103,9 +99,4 @@ const enrollStudents = async (courses, userId) => {
         throw new Error(error.message);
     }
 };
-
-router.post("/capture", capturePayment);
-router.post("/verify", verifyPayment);
-
-module.exports = router;
 
