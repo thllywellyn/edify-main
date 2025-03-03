@@ -169,7 +169,7 @@ export default function EditProfile() {
                 id="about"
                 placeholder="Enter Bio Details"
                 className="form-style"
-                {...register("about", { required: true })}
+                {...register("about", { required: false })}
                 defaultValue={user?.additionalDetails?.about}
               />
               {errors.about && (
