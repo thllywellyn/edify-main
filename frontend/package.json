@@ -1,7 +1,7 @@
 {
   "name": "fontent",
   "private": true,
-  "proxy": "https://localhost:8000",
+  "proxy": "https://edifyserv.lsanalab.xyz",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
