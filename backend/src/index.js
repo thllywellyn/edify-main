@@ -4,10 +4,10 @@ import { app } from './app.js';
 import cors from 'cors';
 
 app.use(cors({
-  origin: '*', // Allows all origins
-  credentials: false // Credentials disabled
+  origin: 'https://edify-main.onrender.com', // Specific origin required
+  credentials: true // Enable credentials
 }));
-console.log("cors done")
+console.log("CORS configured successfully");
 
 dotenv.config({
   path: './.env'
