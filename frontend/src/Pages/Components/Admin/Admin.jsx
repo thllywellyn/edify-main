@@ -21,7 +21,7 @@ const Admin = () => {
   useEffect(()=>{
     const getAllMsg = async () => {
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/admin/messages/all`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/admin/messages/all`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -44,7 +44,7 @@ const Admin = () => {
         Isapproved : approve
       }
 
-      const response = await fetch(`https://edifyserv.lsanalab.xyz/api/admin/${adminID}/approve/${type}/${ID}`, {
+      const response = await fetch(`https://edifyserv.lsanalab.xyz/admin/${adminID}/approve/${type}/${ID}`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +74,7 @@ const Admin = () => {
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/admin/${data}/approve`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/admin/${data}/approve`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

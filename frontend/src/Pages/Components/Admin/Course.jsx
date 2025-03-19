@@ -44,7 +44,7 @@ const Course = () => {
   useEffect(() => {
     const fetchCourseRequests = async () => {
       try {
-        const response = await axios.get(`https://edifyserv.lsanalab.xyz/api/admin/${data}/approve/course`);
+        const response = await axios.get(`https://edifyserv.lsanalab.xyz/admin/${data}/approve/course`);
         console.log("dtat",response.data.data);
         setCourseReq(response.data.data);
       } catch (error) {
@@ -59,7 +59,7 @@ const Course = () => {
   // const handleAccept = async (id,info) => {
   //   console.log(id);
   //   try {
-  //     const response = await fetch(`https://edifyserv.lsanalab.xyz/api/admin/${data}/approve/course/${id}`, {
+  //     const response = await fetch(`https://edifyserv.lsanalab.xyz/admin/${data}/approve/course/${id}`, {
   //       method: 'POST',
   //       headers: {
   //         "Content-Type": "application/json",
@@ -85,7 +85,7 @@ const Course = () => {
     console.log(id);
     console.log(info.Email)
     try {
-      const response = await axios.post(`https://edifyserv.lsanalab.xyz/api/admin/${data}/approve/course/${id}`, {
+      const response = await axios.post(`https://edifyserv.lsanalab.xyz/admin/${data}/approve/course/${id}`, {
         Isapproved: true,
         email: info.Email,
         Firstname: info.enrolledteacher,
@@ -110,7 +110,7 @@ const Course = () => {
   const handleReject = async (id, info) => {
     console.log(id, info);
     try {
-      const response = await axios.post(`https://edifyserv.lsanalab.xyz/api/admin/${data}/approve/course/${id}`, {
+      const response = await axios.post(`https://edifyserv.lsanalab.xyz/admin/${data}/approve/course/${id}`, {
         Isapproved: false,
         email: info.Email,
         Firstname: info.enrolledteacher,
@@ -134,7 +134,7 @@ const Course = () => {
   // const handleReject = async (id,info) => {
   //   console.log(id,info);
   //   try {
-  //     const response = await fetch(`https://edifyserv.lsanalab.xyz/api/admin/${data}/approve/course/${id}`, {
+  //     const response = await fetch(`https://edifyserv.lsanalab.xyz/admin/${data}/approve/course/${id}`, {
   //       method: 'POST',
   //       headers: {
   //         "Content-Type": "application/json",

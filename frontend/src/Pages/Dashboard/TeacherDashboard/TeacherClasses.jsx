@@ -13,7 +13,7 @@ function TeacherClasses() {
     useEffect(() => {
         const getData = async () => {
             try {
-                const response = await fetch(`https://edifyserv.lsanalab.xyz/api/course/classes/teacher/${ID}`, {
+                const response = await fetch(`https://edifyserv.lsanalab.xyz/course/classes/teacher/${ID}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

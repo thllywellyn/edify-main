@@ -15,7 +15,7 @@ const TeacherDocument = () => {
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/teacher/TeacherDocument/${Data}`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/teacher/TeacherDocument/${Data}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -74,7 +74,7 @@ const TeacherDocument = () => {
     setLoader(true);
 
     try {
-      const response = await fetch(`https://edifyserv.lsanalab.xyz/api/teacher/verification/${Data}`, {
+      const response = await fetch(`https://edifyserv.lsanalab.xyz/teacher/verification/${Data}`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'

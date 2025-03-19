@@ -1,5 +1,5 @@
 import {asyncHandler} from "../utils/asyncHandler.js";
-import {ApiError} from "../utilshttps://edifyserv.lsanalab.xyz/apiError.js";
+import {ApiError} from "../utils/apiError.js";
 import { admin } from "../models/admin.model.js";
 import jwt from "jsonwebtoken";
 

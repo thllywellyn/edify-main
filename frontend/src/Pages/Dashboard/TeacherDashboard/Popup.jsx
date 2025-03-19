@@ -70,7 +70,7 @@
 
 //       //call api 
 
-//       const response = await fetch(`https://edifyserv.lsanalab.xyz/api/course/${subject}/create/${ID}`, {
+//       const response = await fetch(`https://edifyserv.lsanalab.xyz/course/${subject}/create/${ID}`, {
 //         method: 'POST',
 //         headers: {
 //           "Content-Type": "application/json",
@@ -232,7 +232,7 @@ function Popup({ onClose, subject }) {
     console.log(data);
 
     // Call API
-    const response = await fetch(`https://edifyserv.lsanalab.xyz/api/course/${subject}/create/${ID}`, {
+    const response = await fetch(`https://edifyserv.lsanalab.xyz/course/${subject}/create/${ID}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -17,7 +17,7 @@ function Withdrawal({onClose,TA}) {
       alert('Enter a valid Amount')
     }else{
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/payment/teacher/${ID}/withdraw`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/payment/teacher/${ID}/withdraw`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
