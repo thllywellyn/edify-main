@@ -12,7 +12,7 @@ const FileUpload = ({ label, onFileChange, value }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('https://edifyserv.lsanalab.xyzhttps://edifyserv.lsanalab.xyz/upload', {
+      const response = await fetch('https://edifyserv.lsanalab.xyz/apihttps://edifyserv.lsanalab.xyz/api/upload', {
         method: 'POST',
         body: formData,
         onUploadProgress: (progressEvent) => {

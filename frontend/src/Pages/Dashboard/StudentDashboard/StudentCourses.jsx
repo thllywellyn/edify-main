@@ -13,7 +13,7 @@ function StudentCourses() {
   useEffect(() => {
       const getData = async () => {
         try {
-          const response = await fetch(`https://edifyserv.lsanalab.xyz/course/student/${ID}/enrolled`, {
+          const response = await fetch(`https://edifyserv.lsanalab.xyz/api/course/student/${ID}/enrolled`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ function StudentCourses() {
 
   const openpopup = async(sub)=>{ 
     setsubDetails(sub);
-    await axios.get(`https://edifyserv.lsanalab.xyz/course/${sub.coursename}`)
+    await axios.get(`https://edifyserv.lsanalab.xyz/api/course/${sub.coursename}`)
       .then(res => {setPopup(true);
       setsubD(res.data.data)})
   }

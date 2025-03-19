@@ -30,7 +30,7 @@ function DashboardTeacher() {
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/Teacher/TeacherDocument/${ID}`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/Teacher/TeacherDocument/${ID}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -53,7 +53,7 @@ function DashboardTeacher() {
 
   useEffect(()=>{
     const getData = async()=>{
-      const Data = await fetch('https://edifyserv.lsanalab.xyz/teacher/teacherdocuments',{
+      const Data = await fetch('https://edifyserv.lsanalab.xyz/api/teacher/teacherdocuments',{
         method: 'POST',
         credentials: "include",
         headers: {
@@ -72,7 +72,7 @@ function DashboardTeacher() {
   useEffect(() => {
     const getAmount = async () => {
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/payment/teacher/${ID}/balance`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/payment/teacher/${ID}/balance`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -97,7 +97,7 @@ function DashboardTeacher() {
   useEffect(() => {
     const getCourses = async () => {
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/course/Teacher/${ID}/enrolled`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/course/Teacher/${ID}/enrolled`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

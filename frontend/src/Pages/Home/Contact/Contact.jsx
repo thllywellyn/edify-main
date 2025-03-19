@@ -15,7 +15,7 @@ function Contact() {
     }else if((!/\S+@\S+\.\S+/.test(email))){
       alert("Enter a valid email!")
     }else{
-      const data = await fetch('https://edifyserv.lsanalab.xyz/admin/contact-us',{
+      const data = await fetch('https://edifyserv.lsanalab.xyz/api/admin/contact-us',{
         method: 'POST',
         credentials: "include",
         headers: {

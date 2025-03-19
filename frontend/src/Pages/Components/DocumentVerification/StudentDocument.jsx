@@ -15,7 +15,7 @@ const StudentDocument = () => {
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/student/StudentDocument/${Data}`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/student/StudentDocument/${Data}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -74,7 +74,7 @@ const StudentDocument = () => {
     });
 
     try {
-      const response = await fetch(`https://edifyserv.lsanalab.xyz/student/verification/${Data}`, {
+      const response = await fetch(`https://edifyserv.lsanalab.xyz/api/student/verification/${Data}`, {
         method: "POST",
         body: formDataObj,
       });

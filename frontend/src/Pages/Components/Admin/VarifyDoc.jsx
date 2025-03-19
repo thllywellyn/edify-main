@@ -19,7 +19,7 @@ function VarifyDoc() {
             email: email,
           }
     
-          const response = await fetch(`https://edifyserv.lsanalab.xyz/admin/${adminID}/approve/${type}/${id}`, {
+          const response = await fetch(`https://edifyserv.lsanalab.xyz/api/admin/${adminID}/approve/${type}/${id}`, {
             method: 'POST',
             headers: {
               "Content-Type": "application/json",
@@ -37,7 +37,7 @@ function VarifyDoc() {
     useEffect(() => {
         const getData = async () => {
             try {
-                const docData = await fetch(`https://edifyserv.lsanalab.xyz/admin/${adminID}/documents/${type}/${ID}`);
+                const docData = await fetch(`https://edifyserv.lsanalab.xyz/api/admin/${adminID}/documents/${type}/${ID}`);
                 const response = await docData.json();
                 setData(response.data);
                 console.log(response.data);

@@ -33,7 +33,7 @@ function Search() {
   const openTeacherDec = async(id,fname,lname,sub)=>{
     setTname({fname,lname,sub});
 
-    const data = await fetch('https://edifyserv.lsanalab.xyz/teacher/teacherdocuments',{
+    const data = await fetch('https://edifyserv.lsanalab.xyz/api/teacher/teacherdocuments',{
         method: 'POST',
         credentials: "include",
         headers: {
@@ -51,7 +51,7 @@ function Search() {
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await fetch(`https://edifyserv.lsanalab.xyz/course/student/${ID}/enrolled`, {
+        const response = await fetch(`https://edifyserv.lsanalab.xyz/api/course/student/${ID}/enrolled`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ function Search() {
 
   const SearchTeacher = async (sub) => {
     const subject = sub.toLowerCase();
-    const Data = await fetch(`https://edifyserv.lsanalab.xyz/course/${subject}`);
+    const Data = await fetch(`https://edifyserv.lsanalab.xyz/api/course/${subject}`);
     const response = await Data.json();
     if (response.statusCode === 200) {
       setCourse(response.data);
@@ -89,7 +89,7 @@ function Search() {
 
   const handleEnroll = async (courseName, id) => {
     let check = await fetch(
-      `https://edifyserv.lsanalab.xyz/course/${courseName}/${id}/verify/student/${ID}`,
+      `https://edifyserv.lsanalab.xyz/api/course/${courseName}/${id}/verify/student/${ID}`,
       {
         method: "POST",
         headers: {
@@ -104,7 +104,7 @@ function Search() {
 
     if(res.statusCode === 200){
 
-    const data = await fetch(`https://edifyserv.lsanalab.xyz/payment/course/${id}/${courseName}`, {
+    const data = await fetch(`https://edifyserv.lsanalab.xyz/api/payment/course/${id}/${courseName}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -115,7 +115,7 @@ function Search() {
     const DATA = await data.json();
     // console.log(DATA.data.id)
 
-    const Key = await fetch("https://edifyserv.lsanalab.xyz/payment/razorkey", {
+    const Key = await fetch("https://edifyserv.lsanalab.xyz/api/payment/razorkey", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -143,7 +143,7 @@ function Search() {
         };
 
         const verificationResponse = await fetch(
-          `https://edifyserv.lsanalab.xyz/payment/confirmation/course/${id}`,
+          `https://edifyserv.lsanalab.xyz/api/payment/confirmation/course/${id}`,
           {
             method: "POST",
             headers: {
@@ -158,7 +158,7 @@ function Search() {
         if (res.statusCode === 200) {
           try {
             let response = await fetch(
-              `https://edifyserv.lsanalab.xyz/course/${courseName}/${id}/add/student/${ID}`,
+              `https://edifyserv.lsanalab.xyz/api/course/${courseName}/${id}/add/student/${ID}`,
               {
                 method: "POST",
                 headers: {
