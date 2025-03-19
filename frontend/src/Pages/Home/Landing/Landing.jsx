@@ -39,7 +39,7 @@ function Landing() {
   const teachersList = async(sub)=>{
     setLoading(true);
 
-    const response = await fetch(`/api/course/${sub}`, {
+    const response = await fetch(`https://edifyserv.lsanalab.xyz/api/course/${sub}`, {
       method: 'GET',
       credentials: "include",
       headers: {

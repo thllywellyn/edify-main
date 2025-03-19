@@ -44,7 +44,7 @@ const ResetTeacher = () => {
     }
     
     try {
-      const response = axios.post(`/api/teacher/forgetpassword/${token}`, {
+      const response = axios.post(`https://edifyserv.lsanalab.xyz/api/teacher/forgetpassword/${token}`, {
         password: data.password,
         confirmPassword: data.confirmPassword
       });

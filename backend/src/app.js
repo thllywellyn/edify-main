@@ -20,24 +20,24 @@ export const instance = new Razorpay({
 
 //student routes
 import studentRouter from "./routes/student.routes.js";
-app.use("/api/student", studentRouter)
+app.use("https://edifyserv.lsanalab.xyz/api/student", studentRouter)
 
 
 //teacher routes
 import teacherRouter from "./routes/teacher.routes.js"
-app.use("/api/teacher", teacherRouter)
+app.use("https://edifyserv.lsanalab.xyz/api/teacher", teacherRouter)
 
 //course routes
 import courseRouter from "./routes/course.routes.js"
-app.use("/api/course", courseRouter)
+app.use("https://edifyserv.lsanalab.xyz/api/course", courseRouter)
 
 import adminRouter from "./routes/admin.routes.js"
-app.use("/api/admin", adminRouter)
+app.use("https://edifyserv.lsanalab.xyz/api/admin", adminRouter)
 
 import paymentRouter from "./routes/payment.routes.js"
-app.use("/api/payment", paymentRouter)
+app.use("https://edifyserv.lsanalab.xyz/api/payment", paymentRouter)
 
 import uploadRouter from './routes/upload.routes.js';
-app.use('/api/upload', uploadRouter);
+app.use('https://edifyserv.lsanalab.xyz/api/upload', uploadRouter);
 
 export {app}

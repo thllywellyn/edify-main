@@ -1,4 +1,4 @@
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../utilshttps://edifyserv.lsanalab.xyz/apiError.js";
 import {Teacher} from "../models/teacher.model.js";
 import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/asyncHandler.js";

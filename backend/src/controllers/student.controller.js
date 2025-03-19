@@ -1,7 +1,7 @@
 import {asyncHandler} from "../utils/asyncHandler.js";
-import {ApiError} from "../utils/ApiError.js";
+import {ApiError} from "../utilshttps://edifyserv.lsanalab.xyz/apiError.js";
 import {student, studentdocs} from "../models/student.model.js";
-import {ApiResponse} from "../utils/ApiResponse.js";
+import {ApiResponse} from "../utilshttps://edifyserv.lsanalab.xyz/apiResponse.js";
 import nodemailer from "nodemailer";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Teacher } from "../models/teacher.model.js";
@@ -44,7 +44,7 @@ const verifyEmail = async (Email, Firstname, createdStudent_id) => {
                 <p style="margin: 20px;"> Hi ${Firstname}, Please click the button below to verify your E-mail. </p>
                 <img src="https://img.freepik.com/free-vector/illustration-e-mail-protection-concept-e-mail-envelope-with-file-document-attach-file-system-security-approved_1150-41788.jpg?size=626&ext=jpg&uid=R140292450&ga=GA1.1.553867909.1706200225&semt=ais" alt="Verification Image" style="width: 100%; height: auto;">
                 <br>
-                <a href="https://edifyserv.lsanalab.xyz/api/student/verify?id=${createdStudent_id}">
+                <a href="https://edifyserv.lsanalab.xyzhttps://edifyserv.lsanalab.xyz/api/student/verify?id=${createdStudent_id}">
                     <button style="background-color: black; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer;">Verify Email</button>
                 </a>
             </div>`
