@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { upload } from '../middlewares/multer.middleware.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
-import { ApiResponse } from '../utils/apiResponse.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/apiError.js';
 import fs from 'fs';
 
