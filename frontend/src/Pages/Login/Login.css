@@ -1,0 +1,142 @@
+.main {
+  margin: clamp(1rem, 5vh, 3rem) auto;
+  padding: var(--spacing-md);
+  color: var(--text-primary);
+  font-family: sans-serif;
+  display: flex;
+  gap: clamp(1rem, 3vw, 3rem);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-height: calc(100vh - 200px);
+}
+
+.main::-webkit-scrollbar {
+  width: 0 !important;
+}
+
+.container {
+  width: clamp(280px, 90%, 380px);
+  background-color: var(--bg-secondary);
+  text-align: center;
+  border-radius: var(--border-radius-lg);
+  padding: clamp(1rem, 3vw, 2rem);
+  box-shadow: var(--shadow-lg);
+}
+
+.para1 {
+  font-size: large;
+  margin-top: 10px;
+}
+
+.logo {
+  padding: 15px;
+}
+
+.para {
+  margin-top: 20px;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.form {
+  margin-top: 40px;
+}
+
+.input-0 {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  width: clamp(200px, 80%, 300px);
+  padding: clamp(0.5rem, 1.5vh, 1rem);
+  border-radius: var(--border-radius-md);
+  padding-left: 1rem;
+  color: var(--text-primary);
+  transition: var(--transition-base);
+}
+
+.input-0::placeholder {
+  font-size: 16px;
+  padding-left: 20px;
+}
+
+.input-0:focus {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.input-2 {
+  margin-top: var(--spacing-md);
+}
+
+.btns {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.btns-1 {
+  background-color: var(--accent-primary);
+  padding: clamp(0.5rem, 1.5vh, 1rem);
+  min-width: 150px;
+  border-radius: var(--border-radius-md);
+  transition: var(--transition-base);
+  color: white;
+}
+
+.btns-1:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.radio-btn {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.signup-link {
+  margin-top: 20px;
+  font-size: small;
+  color: var(--text-primary);
+}
+
+.signup-link p {
+  color: #fff;
+}
+
+@media screen and (max-width: 768px) {
+  .btns {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: center;
+  }
+
+  .btns-1 {
+    width: clamp(150px, 80%, 200px);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .container {
+    width: 95%;
+    padding: 1rem;
+  }
+
+  .input-0 {
+    width: 90%;
+  }
+
+  .btns {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btns-1 {
+    width: 90%;
+  }
+}
