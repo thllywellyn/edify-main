@@ -355,21 +355,21 @@ const ForgetPassword=asyncHandler(async(req,res)=>{
  });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req.cookies?.Refreshtoken || req.body?.Refreshtoken;
-
-    if (!incomingRefreshToken) {
-        throw new ApiError(401, "Unauthorized request");
-    }
-
     try {
-        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
-        const teacher = await Teacher.findById(decodedToken?._id);
+        const incomingRefreshToken = req.cookies?.Refreshtoken || req.body?.Refreshtoken;
 
-        if (!teacher) {
-            throw new ApiError(401, "Invalid refresh token");
+        if (!incomingRefreshToken) {
+            throw new ApiError(401, "Unauthorized request - No refresh token");
         }
 
-        if (incomingRefreshToken !== teacher?.Refreshtoken) {
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+        
+        const teacher = await Teacher.findById(decodedToken._id);
+        if (!teacher) {
+            throw new ApiError(401, "Invalid refresh token - Teacher not found");
+        }
+
+        if (incomingRefreshToken !== teacher.Refreshtoken) {
             throw new ApiError(401, "Refresh token is expired or used");
         }
 
@@ -377,15 +377,25 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
         const options = {
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite: 'Strict'
         }
 
         return res
             .status(200)
             .cookie("Accesstoken", Accesstoken, options)
             .cookie("Refreshtoken", Refreshtoken, options)
-            .json(new ApiResponse(200, { Accesstoken }, "Access token refreshed"));
+            .json(new ApiResponse(200, { 
+                success: true,
+                message: "Access token refreshed"
+            }));
     } catch (error) {
+        if (error.name === 'JsonWebTokenError') {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+        if (error.name === 'TokenExpiredError') {
+            throw new ApiError(401, "Refresh token has expired");
+        }
         throw new ApiError(401, error?.message || "Invalid refresh token");
     }
 });

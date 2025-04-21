@@ -1,44 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import Modal from '../Components/Modal';
+import Select from '../Components/Select';
+import Input from '../Components/Input';
+import Button from '../Components/Button';
+import Alert from '../Components/Alert';
 import DateTime from './DateTime';
+
+const DAY = {
+  0: 'Sunday',
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday'
+};
 
 function AddClass({ onClose }) {
   const { ID } = useParams();
   const [courses, setCourses] = useState([]);
-  const [error, setError] = useState([]);
-  const [date, setDate] = useState("");
-  const [link, setLink] = useState("");
-  const [note, setNote] = useState("");
   const [CourseId, setCourseId] = useState('');
-  const [allowedDays, setCurrData] = useState([]);
-
-  const DAY = [
-    "Sunday",    
-    "Monday",    
-    "Tuesday",   
-    "Wednesday", 
-    "Thursday",  
-    "Friday",    
-    "Saturday"   
-  ];
-  
-  function setToMidnight(dateTimeString) {
-    // Create a new Date object from the input string
-    let date = new Date(dateTimeString);
-    
-    // Extract the time part
-    let hours = date.getUTCHours();
-    let minutes = date.getUTCMinutes();
-    let seconds = date.getUTCSeconds();
-    
-    let totalMinutes = (hours * 60) + minutes;
-    date.setUTCHours(0, 0, 0, 0);
-    let modifiedDateTimeString = date.toISOString();
-    
-    const DATETIME = [totalMinutes, modifiedDateTimeString];
-    
-    return DATETIME;
-  }
+  const [date, setDate] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [allowedDays, setAllowedDays] = useState([]);
 
   useEffect(() => {
     const getCourses = async () => {
@@ -50,123 +36,94 @@ function AddClass({ onClose }) {
           },
         });
 
-        // console.log(response);
-
         if (!response.ok) {
-          throw new Error('Failed to fetch data');
+          throw new Error('Failed to fetch courses');
         }
 
-        const res = await response.json();
-
-        // console.log(res.data);
-        setCourses(res.data);
-        setCourseId(res.data[0]._id);
+        const data = await response.json();
+        setCourses(data.data);
       } catch (error) {
         setError(error.message);
       }
     };
     getCourses();
-  }, [ID]); 
+  }, [ID]);
 
   useEffect(() => {
-    const filteredData = courses.filter(course => course._id === CourseId);
-    setCurrData(filteredData[0]?.schedule);
-    // console.log("output:", filteredData[0]?.schedule);
-  }, [CourseId]);
-  
+    if (CourseId) {
+      const selectedCourse = courses.find(course => course._id === CourseId);
+      if (selectedCourse) {
+        setAllowedDays(selectedCourse.schedule.map(day => day.day));
+      }
+    }
+  }, [CourseId, courses]);
 
   const addCourses = async () => {
-    const currentDate = new Date();
-    const givenDate = new Date(date);
+    if (!CourseId || !date) {
+      setError('Please fill in all fields');
+      return;
+    }
 
-    const modifyDate = setToMidnight(date);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/course/classes/${CourseId}/create/${ID}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ date }),
+      });
 
-    const data = {
-      title: note,
-      timing: modifyDate[0],
-      date: modifyDate[1],
-      link: link,
-      status: 'upcoming',
-    };
-
-    // console.log("add classes",data)
-
-
-    if (currentDate > givenDate) {
-      alert('choose a valid Date!');
-    } else if (note === '' || date === '' || link === '') {
-      alert('All fields are required!');
-    } else {
-      try {
-        const response = await fetch(`/api/course/${CourseId}/teacher/${ID}/add-class`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-
-        const res = await response.json();
-        alert(res.message);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-
-        
-        
-
-        if (res.statusCode === 200) {
-          onClose();
-        }
-      } catch (error) {
-        setError(error.message);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create class');
       }
+
+      onClose();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center'>
-      <div className='w-[60%] h-[70%] bg-blue-gray-700 text-white rounded-md'>
-        <div className='absolute w-9 h-9 bg-[#E2B659] rounded-xl cursor-pointer flex items-center justify-center m-2' onClick={onClose}>✖️</div>
-        
-        <div className='flex justify-center mt-5 gap-10 border-b-2 py-5'>
-          <p className='text-2xl'>Create next class</p>
-          <select value={CourseId} onChange={(e) => setCourseId(e.target.value)} className='text-gray-900 rounded-md w-28 px-2 border-0 outline-0'>
-            {courses && (
-              courses.filter((course) => course.isapproved)
-              .map((course) => (
-                <option key={course._id} value={course._id}>{course.coursename.toUpperCase()} {'['} {course.schedule.map(day => DAY[day.day]).join(', ')} {']'}</option>
-              ))
-            )}
-          </select>
+    <Modal title="Schedule New Class" onClose={onClose}>
+      <div className="space-y-6">
+        {error && <Alert type="error" message={error} />}
+
+        <Select
+          label="Select Course"
+          value={CourseId}
+          onChange={(e) => setCourseId(e.target.value)}
+        >
+          <option value="">Choose a course</option>
+          {courses
+            .filter((course) => course.isapproved)
+            .map((course) => (
+              <option key={course._id} value={course._id}>
+                {course.coursename.toUpperCase()} [{course.schedule.map(day => DAY[day.day]).join(', ')}]
+              </option>
+            ))}
+        </Select>
+
+        <div className="space-y-2">
+          <label className="block text-gray-700 dark:text-gray-300">Date & Time</label>
+          <DateTime setDate={setDate} allowedDays={allowedDays} />
         </div>
 
-        <div className='flex items-center justify-around my-20 mx-5'>
-
-          <div className='flex gap-5 text-black'>
-            <label htmlFor="" className='text-xl text-white'>Date & Time:</label>
-            <DateTime setDate={setDate} allowedDays={allowedDays}/>
-          </div>
-        </div>
-
-        <div className='m-10 flex items-center justify-center gap-20 mb-20'>
-          <div className='flex gap-5'>
-            <label htmlFor="" className='text-xl'>Link:</label>
-            <input value={link} onChange={(e) => setLink(e.target.value)} type="url" className='border-0 outline-0 text-gray-900 py-1 px-3 rounded-sm' />
-          </div>
-
-          <div className='flex gap-5'>
-            <label htmlFor="" className='text-xl'>Title:</label>
-            <input value={note} onChange={(e) => setNote(e.target.value)} type="text" className='border-0 outline-0 text-gray-900 py-1 px-3 rounded-sm' />
-          </div>
-        </div>
-
-        <div className='flex items-center justify-center'>
-          <div onClick={addCourses} className='bg-[#E2B659] w-32 text-center py-2 rounded-sm text-brown-900 text-xl cursor-pointer'>Submit</div>
+        <div className="flex justify-end">
+          <Button
+            onClick={addCourses}
+            isLoading={isLoading}
+            disabled={!CourseId || !date}
+          >
+            Schedule Class
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

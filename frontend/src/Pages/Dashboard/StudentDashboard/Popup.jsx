@@ -1,68 +1,71 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react';
+import Modal from '../Components/Modal';
 
-function Popup({onClose, subject, allSubject}) {
-  const [details, setDetails] = useState({})
-  const [Tdec, setTeacherDetails] = useState(null);
-  const [starCount, setStar] = useState(5);
+function Popup({ onClose, subject, allSubject }) {
+  const [details, setDetails] = useState({});
+  const [teacherDetails, setTeacherDetails] = useState(null);
 
-  const price = {
-    math: 700,
-    physics: 800,
-    computer: 1000,
-    chemistry: 600,
-    biology: 500,
-  };
-    
-  useEffect(()=>{
-    const fetchData = async()=>{
-      let actualdts = await allSubject?.filter( res => res._id === subject._id)
-      setDetails(actualdts[0]?.enrolledteacher)
-    }
+  useEffect(() => {
+    const fetchData = async () => {
+      const actualDetails = await allSubject?.filter(res => res._id === subject._id);
+      setDetails(actualDetails[0]?.enrolledteacher);
+    };
     fetchData();
-  },[details])
+  }, [details, subject, allSubject]);
 
-  useEffect(()=>{
-    const getData = async()=>{
-      const data = await fetch('/api/teacher/teacherdocuments',{
+  useEffect(() => {
+    const getData = async () => {
+      if (!details?.Teacherdetails) return;
+
+      const data = await fetch('/api/teacher/teacherdocuments', {
         method: 'POST',
         credentials: "include",
         headers: {
-        "Content-Type": "application/json",
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({teacherID : details.Teacherdetails}),
-      })
+        body: JSON.stringify({ teacherID: details.Teacherdetails }),
+      });
       const res = await data.json();
-      // console.log(res.data);
       setTeacherDetails(res.data);
-    }
-
+    };
     getData();
-  },[])
+  }, [details]);
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center'>
-        <div className='bg-[#008280] w-96 h-[20rem] rounded-md'>
-          <div className=' absolute w-9 h-9 bg-white rounded-xl cursor-pointer flex items-center justify-center m-2' onClick={onClose}>✖️</div>
-          <div className=' text-center my-5 text-gray-900 text-3xl font-semibold'>
-            <p>{subject.coursename.toUpperCase()}</p>
-          </div>
-          <div className='text-center text-gray-900 px-3 mb-3'>
-            <p>{subject.description}</p>
-          </div>
-          <hr />
-
-          {details && (
-            <div className='flex flex-col justify-center p-5 text-1xl gap-4'>
-              <p>Teacher : <span className='text-white'>{details.Firstname} {details.Lastname}</span></p>
-              {/* <p>Teacher : <span className='text-white'>{details.Firstname} {details.Lastname}</span> {'⭐'.repeat(starCount)}</p> */}
-              <p>Email : <span className='text-white'>{details.Email}</span></p>
-              {/* <p>Course Duration : <span className='text-white'>6 Months</span></p> */}
-              <p>Fees : <span className='text-white'>Rs. {price[subject.coursename]} per month / per student</span></p>
-            </div>
-          )}
+    <Modal title={subject.coursename.toUpperCase()} onClose={onClose}>
+      <div className="space-y-6">
+        <div className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Course Description</h4>
+          <p className="mt-1 text-gray-900 dark:text-white">{subject.description}</p>
         </div>
-    </div>
-  )
+
+        {details && (
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Teacher</h4>
+              <p className="mt-1 text-gray-900 dark:text-white">
+                {details.Firstname} {details.Lastname}
+              </p>
+            </div>
+
+            <div className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Contact</h4>
+              <p className="mt-1 text-gray-900 dark:text-white">{details.Email}</p>
+            </div>
+
+            {teacherDetails && (
+              <div className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Experience</h4>
+                <p className="mt-1 text-gray-900 dark:text-white">
+                  {teacherDetails.Experience} years
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
 }
 
-export default Popup
+export default Popup;

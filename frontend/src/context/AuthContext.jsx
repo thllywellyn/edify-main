@@ -20,6 +20,11 @@ export function AuthProvider({ children }) {
                     setUser(null);
                 } else {
                     setUser(userSession.data);
+                    // Auto-redirect if on login pages
+                    const path = window.location.pathname;
+                    if (path === '/login' || path === '/adminLogin') {
+                        handleRedirect(userSession.data);
+                    }
                 }
             }
         } catch (err) {
@@ -30,31 +35,55 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
+    const handleRedirect = (userData) => {
+        if (!userData) return;
+
+        // Admin redirection
+        if (userData.type === 'admin') {
+            navigate(`/admin/${userData._id}`);
+            return;
+        }
+
+        // Student/Teacher redirection based on status
+        switch (userData.status) {
+            case "pending":
+                if (userData.Teacherdetails || userData.Studentdetails) {
+                    navigate('/pending');
+                } else {
+                    navigate(`/${userData.type}Document/${userData._id}`);
+                }
+                break;
+            case "approved":
+                const dashboardPath = userData.type === 'student' ? 'search' : 'home';
+                navigate(`/dashboard/${userData.type}/${userData._id}/${dashboardPath}`);
+                break;
+            case "reupload":
+                navigate(`/rejected/${userData.type}/${userData._id}`);
+                break;
+            default:
+                navigate('/');
+        }
+    };
+
     const login = async (userData, userType) => {
         try {
             setLoading(true);
             setError(null);
             const userWithType = { ...userData, type: userType };
             setUser(userWithType);
+            
+            // Store in localStorage with timestamp
             const userSession = {
                 data: userWithType,
                 timestamp: new Date().getTime()
             };
             localStorage.setItem('user', JSON.stringify(userSession));
 
-            // Handle navigation based on user status
-            if (userData.status === "pending") {
-                if (userData.Teacherdetails || userData.Studentdetails) {
-                    navigate('/pending');
-                } else {
-                    navigate(`/${userType}Document/${userData._id}`);
-                }
-            } else if (userData.status === "approved") {
-                navigate(`/dashboard/${userType}/${userData._id}/${userType === 'student' ? 'search' : 'home'}`);
-            } else if (userData.status === "reupload") {
-                navigate(`/rejected/${userType}/${userData._id}`);
-            }
+            // Handle redirection
+            handleRedirect(userWithType);
+            
         } catch (err) {
+            console.error('Login error:', err);
             setError(err.message);
             setUser(null);
             localStorage.removeItem('user');
@@ -72,7 +101,7 @@ export function AuthProvider({ children }) {
             });
             setUser(null);
             localStorage.removeItem('user');
-            navigate('/login', { replace: true });
+            navigate(userType === 'admin' ? '/adminLogin' : '/login');
         } catch (err) {
             console.error('Logout error:', err);
         }

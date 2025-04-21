@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Withdrawal from "./Withdrawal";
 import { TbMessage2Star } from "react-icons/tb";
+import { FaChalkboardTeacher, FaUserGraduate, FaBook, FaMoneyBillWave } from "react-icons/fa";
+import DashboardCard from "../Components/DashboardCard";
 
 function DashboardTeacher() {
   const { ID } = useParams();
@@ -11,11 +13,9 @@ function DashboardTeacher() {
   const [popup, setPopup] = useState(false);
   const [notification, setNotification] = useState(false);
   const [amount, setAmount] = useState(0);
-  const [subjectForm, setsubjectForm] = useState('Math');
   const [Tdec, setTeacherDetails] = useState(null);
-  const [starCount, setStar] = useState(5);
-
   const [formPopup, setFormPopup] = useState(false);
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   const price = {
     math: 700,
@@ -24,8 +24,6 @@ function DashboardTeacher() {
     chemistry: 600,
     biology: 500,
   };
-
-  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   useEffect(() => {
     const getData = async () => {
@@ -43,7 +41,6 @@ function DashboardTeacher() {
 
         const user = await response.json();
         setdata(user.data);
-        // console.log(user.data);
       } catch (error) {
         setError(error.message);
       }
@@ -51,23 +48,22 @@ function DashboardTeacher() {
     getData();
   }, []);
 
-  useEffect(()=>{
-    const getData = async()=>{
-      const Data = await fetch('/api/teacher/teacherdocuments',{
+  useEffect(() => {
+    const getData = async () => {
+      const Data = await fetch('/api/teacher/teacherdocuments', {
         method: 'POST',
         credentials: "include",
         headers: {
-        "Content-Type": "application/json",
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({teacherID : data.Teacherdetails}),
-      })
+        body: JSON.stringify({ teacherID: data.Teacherdetails }),
+      });
       const res = await Data.json();
-      // console.log(res.data);
       setTeacherDetails(res.data);
-    }
+    };
 
     getData();
-  },[courses])
+  }, [courses]);
 
   useEffect(() => {
     const getAmount = async () => {
@@ -85,9 +81,7 @@ function DashboardTeacher() {
 
         const user = await response.json();
         setAmount(user.data.newTeacher.Balance);
-        // console.log(user)
       } catch (error) {
-        // setError(error.message)
         console.log(error);
       }
     };
@@ -110,7 +104,6 @@ function DashboardTeacher() {
 
         const res = await response.json();
         setCourses(res.data);
-        console.log(res.data);
       } catch (error) {
         setError(error.message);
       }
@@ -119,107 +112,136 @@ function DashboardTeacher() {
   }, []);
 
   return (
-    <>
-      <div className="m-5 ml-60 text-white flex flex-col gap-7">
-        <div className="text-[1.1rem] w-[30rem] flex gap-60 items-center">
-          {/* <p>Amount: <span className=" text-green-500">Rs. {amount}</span></p> */}
-          <div className="bg-[#1671D8] p-3 rounded-md cursor-pointer">
-            Details
-          </div>
-          <div
-            // onClick={() => setPopup(true)}
-            className="bg-[#1671D8] p-3 rounded-md cursor-pointer"
-          >
-            Remuneration
-          </div>
-          {/* <div className="flex items-center gap-2 ml-28 bg-[#1671D8] p-3 rounded-md cursor-pointer" onClick={()=>setNotification(prev => !prev)}>
-            <span>Notifications</span>
-            <TbMessage2Star />
-          </div> */}
-        </div>
-        <hr />
-        <div className="flex gap-32">
-          <div className="flex flex-col gap-5">
-            <p>Name: <span className="text-black">{data.Firstname} {data.Lastname}</span></p>
-            {/* <p>Name: {data.Firstname} {data.Lastname} {'⭐'.repeat(starCount)}</p> */}
-            <p>Email: <span className="text-black">{data.Email}</span></p>
-            <p>Phone: <span className="text-black">{Tdec?.Phone}</span></p>
-            <p>Address: <span className="text-black">{Tdec?.Address}</span></p>
-            <p>Experience: <span className="text-black">{Tdec?.Experience} years</span></p>
-          </div>
-          <div>
-            <div className="flex gap-3 flex-col">
-              <p className="bg-[#1671D8] py-1 px-2 w-fit">Courses</p>
-              {courses &&
-                courses.filter((course) => course.isapproved)
-                .map((course) => (
-                  <p
-                    key={course._id}
-                    // className=" bg-[#1671D8] py-1 px-2 rounded-xl w-fit"
-                    className="py-1 px-2 rounded-xl w-fit"
-                  >
-                    {course.coursename} :{" "}
-                    <span className="text-black">
-                      {" [ "}{course.schedule.map(days => `${daysOfWeek[days.day]} ${Math.floor(days.starttime/60)}:${(days.starttime%60 === 0 ? "00":days.starttime%60)} - ${Math.floor(days.endtime/60)}:${(days.endtime%60 === 0 ? "00" : days.endtime%60)}`).join(', ')}{" ] "}
-                    </span>
-                    <span className="text-black font-bold">
-                      {" => "}
-                      Rs. {price[course.coursename]} per student / per month
-                    </span>
-                  </p>
-                ))}
+    <div className="space-y-8">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <DashboardCard>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Courses</p>
+              <h3 className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{courses.length}</h3>
+            </div>
+            <div className="p-3 bg-[#4E84C1]/10 rounded-lg">
+              <FaBook className="h-6 w-6 text-[#4E84C1]" />
             </div>
           </div>
-          <div className="ml-28">
-            {/* {notification && (
-              show all notifications
-              example
-              <div>
-                <p>course : Math</p>
-                <p>Timing : sun,Mon,tue</p>
-                <p>status : pending</p>
-                <p>message : sbcxbbdjbd</p>
-              </div>
-            )} */}
-          </div>
-        </div>
+        </DashboardCard>
 
-        {popup && <Withdrawal onClose={() => setPopup(false)} TA={amount} />}
-        
-        {formPopup && (
-          <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center'>
-            <div className='bg-[#5be0de] text-black w-[70vw] px-14 py-10 rounded-sm'>
-              {/* <div className=' absolute w-9 h-9 bg-white rounded-xl cursor-pointer flex items-center justify-center m-2' onClick={onClose}>✖️</div> */}
-
-              <p className='text-3xl'>Teacher Feedback Form</p>
-              <p className=' border-b-2 py-2'>We highly appreciate your involvement. Please help us improve by filling out this teacher feedback form. Thank you!</p>
-
-              <div className='flex flex-col gap-3 my-5 pb-5 border-b-2'>
-                <label>Full Name</label>
-                <input type="text" className='p-2'  placeholder='Teacher / Instructor Name'/>
-                <label>Course Name</label>
-
-                <input type="text" className='p-2'  placeholder='Course Name'/>
-                {/* <input type="text" value={subjectForm} readOnly className='p-2'  placeholder='Course Name'/> */}
-
-                <label>Number of Years Teaching ?</label>
-                <input type="text" className='p-2'  placeholder='in years'/>
-              </div>
-
-              <div className='py-3 flex flex-col justify-center items-center'>
-                <p className='pb-3 text-center'>Do you have suggestions on what we can do to provide you with a better service?</p>
-                <textarea className=" rounded-md w-[80%] h-32 p-2" placeholder="Type here ..."></textarea>
-              </div>
-
-              <div className='flex justify-center mt-3'>
-                <button className='w-[10rem]'>Submit Form</button>
-              </div>
-              
+        <DashboardCard>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Students</p>
+              <h3 className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+                {courses.reduce((acc, course) => acc + (course.enrolledStudents?.length || 0), 0)}
+              </h3>
+            </div>
+            <div className="p-3 bg-[#4E84C1]/10 rounded-lg">
+              <FaUserGraduate className="h-6 w-6 text-[#4E84C1]" />
             </div>
           </div>
-        )}
+        </DashboardCard>
+
+        <DashboardCard>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Experience</p>
+              <h3 className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+                {Tdec?.Experience || 0} years
+              </h3>
+            </div>
+            <div className="p-3 bg-[#4E84C1]/10 rounded-lg">
+              <FaChalkboardTeacher className="h-6 w-6 text-[#4E84C1]" />
+            </div>
+          </div>
+        </DashboardCard>
+
+        <DashboardCard onClick={() => setPopup(true)} hover={true}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Balance</p>
+              <h3 className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+                ₹{amount}
+              </h3>
+            </div>
+            <div className="p-3 bg-[#4E84C1]/10 rounded-lg">
+              <FaMoneyBillWave className="h-6 w-6 text-[#4E84C1]" />
+            </div>
+          </div>
+        </DashboardCard>
       </div>
-    </>
+
+      {/* Profile & Course Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Profile Card */}
+        <DashboardCard>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Profile Details</h2>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Full Name</p>
+              <p className="mt-1 text-gray-900 dark:text-white">{data.Firstname} {data.Lastname}</p>
+            </div>
+            <div className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</p>
+              <p className="mt-1 text-gray-900 dark:text-white">{data.Email}</p>
+            </div>
+            <div className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</p>
+              <p className="mt-1 text-gray-900 dark:text-white">{Tdec?.Phone || 'Not provided'}</p>
+            </div>
+            <div className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Address</p>
+              <p className="mt-1 text-gray-900 dark:text-white">{Tdec?.Address || 'Not provided'}</p>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* Course Schedule */}
+        <DashboardCard className="lg:col-span-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Course Schedule</h2>
+          <div className="space-y-4">
+            {courses
+              .filter((course) => course.isapproved)
+              .map((course) => (
+                <div key={course._id} className="p-4 bg-gray-50 dark:bg-[#042439] rounded-lg hover:bg-gray-100 dark:hover:bg-[#031c2e] transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base font-medium text-gray-900 dark:text-white">
+                      {course.coursename.toUpperCase()}
+                    </h3>
+                    <span className="text-sm font-medium text-[#4E84C1]">
+                      ₹{price[course.coursename]} per student / month
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Schedule: {course.schedule.map(days => 
+                      `${daysOfWeek[days.day]} ${Math.floor(days.starttime/60)}:${(days.starttime%60 === 0 ? "00":days.starttime%60)} - ${Math.floor(days.endtime/60)}:${(days.endtime%60 === 0 ? "00" : days.endtime%60)}`
+                    ).join(', ')}
+                  </p>
+                </div>
+              ))}
+          </div>
+        </DashboardCard>
+      </div>
+
+      {/* Modals */}
+      {popup && <Withdrawal onClose={() => setPopup(false)} TA={amount} />}
+      
+      {formPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-[#0a3553] w-full max-w-2xl p-6 rounded-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Teacher Feedback Form</h2>
+              <button onClick={() => setFormPopup(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                ✕
+              </button>
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              We highly appreciate your involvement. Please help us improve by filling out this feedback form.
+            </p>
+            {/* Form content would go here */}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

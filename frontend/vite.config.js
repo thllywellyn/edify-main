@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'path'
 
 export default defineConfig({
   server: {
@@ -8,20 +7,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: false,
-        withCredentials: true
+        secure: false
       }
     },
     port: 5173,
-    open: false,
-    fs: {
-      strict: false,
-      allow: [
-        path.resolve(__dirname, '..'),
-        path.resolve(__dirname, 'node_modules'),
-        path.resolve(__dirname, 'src')
-      ]
-    }
+    open: true
   },
   plugins: [react()],
   build: {

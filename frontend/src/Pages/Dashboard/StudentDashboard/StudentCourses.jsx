@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Popup from './Popup';
 import CourseVideos from '../Components/CourseVideos';
+import CourseCard from '../Components/CourseCard';
+import DashboardCard from '../Components/DashboardCard';
 
 function StudentCourses() {
   const { ID } = useParams();
@@ -44,68 +46,52 @@ function StudentCourses() {
       });
   };
 
-  const daysName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-  const Image = {
-    "physics": "https://www.figma.com/file/6b4R8evBkii6mI53IA4vSS/image/8e9bf690d23d886f63466a814cfbec78187f91d2",
-    "chemistry": "https://www.figma.com/file/6b4R8evBkii6mI53IA4vSS/image/3e546b344774eb0235acc6bf6dad7814a59d6e95",
-    "biology": "https://www.figma.com/file/6b4R8evBkii6mI53IA4vSS/image/28ac70002ae0a676d9cfb0f298f3e453d12b5555",
-    "math": "https://www.figma.com/file/6b4R8evBkii6mI53IA4vSS/image/61930117e428a1f0f7268f888a84145f93aa0664",
-    "computer": "https://www.figma.com/file/6b4R8evBkii6mI53IA4vSS/image/a64c93efe984ab29f1dfb9e8d8accd9ba449f272",
-  };
-
   return (
-    <>
-      <div className="flex flex-wrap gap-10 pl-[12rem] mt-12 justify-center mb-2">
-        {data.map(course => (
-          <div
-            key={course._id}
-            className="text-white rounded-lg bg-[#042439] cursor-pointer p-4 w-[20rem]"
-          >
-            <div 
-              className="text-center mb-4"
-              onClick={() => openpopup(course)}
-            >
-              <div className="flex justify-center items-center gap-3 mb-2">
-                <img src={Image[course.coursename]} alt={course.coursename} width={60} />
-                <p className="text-xl font-semibold">{course.coursename.toUpperCase()}</p>
+    <div className="space-y-8">
+      {/* Header */}
+      <DashboardCard>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+          My Courses
+        </h1>
+      </DashboardCard>
+
+      {/* Course Grid */}
+      {data.length > 0 ? (
+        <DashboardCard>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {data.map(course => (
+              <div key={course._id}>
+                <CourseCard
+                  course={course}
+                  showVideos={selectedCourse === course._id}
+                  onVideoClick={() => setSelectedCourse(selectedCourse === course._id ? null : course._id)}
+                  onDetailsClick={openpopup}
+                />
+                {selectedCourse === course._id && (
+                  <div className="mt-4 p-4 bg-gray-50 dark:bg-[#042439] rounded-lg">
+                    <CourseVideos courseId={course._id} />
+                  </div>
+                )}
               </div>
-              <p className="text-gray-300 text-sm px-2">{course.description}</p>
-
-              {course.schedule && (
-                <div className="mt-4 text-sm">
-                  <p className="text-blue-500 font-bold mb-1">Schedule:</p>
-                  <p className="text-gray-300">
-                    {course.schedule.map(daytime => (
-                      `${daysName[daytime.day]} ${Math.floor(daytime.starttime / 60)}:${daytime.starttime % 60 === 0 ? "00" : daytime.starttime % 60} - ${Math.floor(daytime.endtime/60)}:${daytime.endtime % 60 === 0 ? "00" : daytime.endtime % 60}`
-                    )).join(', ')}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-[#9433E0]/20 pt-4">
-              <button
-                onClick={() => setSelectedCourse(selectedCourse === course._id ? null : course._id)}
-                className="w-full bg-[#9433E0] hover:bg-[#7928b8] text-white py-2 rounded-md transition-colors"
-              >
-                {selectedCourse === course._id ? 'Hide Videos' : 'View Course Videos'}
-              </button>
-
-              {selectedCourse === course._id && (
-                <div className="mt-4">
-                  <CourseVideos courseId={course._id} />
-                </div>
-              )}
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </DashboardCard>
+      ) : (
+        <DashboardCard>
+          <div className="text-center py-8">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">No Courses Found</h3>
+            <p className="mt-2 text-gray-500 dark:text-gray-400">
+              You haven't enrolled in any courses yet. Start by searching for teachers and enrolling in their courses.
+            </p>
+          </div>
+        </DashboardCard>
+      )}
 
+      {/* Course Details Modal */}
       {popup && (
         <Popup onClose={() => setPopup(false)} subject={subDetails} allSubject={subD} />
       )}
-    </>
+    </div>
   );
 }
 

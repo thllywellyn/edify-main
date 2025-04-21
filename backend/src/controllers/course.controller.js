@@ -578,21 +578,21 @@ const getCourseVideos = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Course ID is required");
     }
 
-    if (!user) {
-        throw new ApiError(401, "Authentication required");
+    // First find the course
+    const courseWithVideos = await course.findById(courseId);
+    
+    if (!courseWithVideos) {
+        throw new ApiError(404, "Course not found");
     }
 
-    // Find the course and check if the user has access
-    const courseWithVideos = await course.findOne({
-        _id: courseId,
-        $or: [
-            { enrolledStudent: user._id },
-            { enrolledteacher: user._id }
-        ]
-    }).select('coursename videos');
+    // Check access based on user type and enrollment
+    const isTeacher = req.teacher?._id?.toString() === courseWithVideos.enrolledteacher?.toString();
+    const isStudent = req.Student && courseWithVideos.enrolledStudent?.some(
+        studentId => studentId.toString() === req.Student._id.toString()
+    );
 
-    if (!courseWithVideos) {
-        throw new ApiError(404, "Course not found or unauthorized access");
+    if (!isTeacher && !isStudent) {
+        throw new ApiError(403, "Unauthorized access to course videos");
     }
 
     return res

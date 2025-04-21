@@ -1,13 +1,12 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import CommonDashboard from './CommonDashboard';
+import DashboardErrorBoundary from './DashboardErrorBoundary';
 
 function StudentDashboardLayout() {
   return (
-    <>
+    <DashboardErrorBoundary>
       <CommonDashboard userType="Student" />
-      <Outlet />
-    </>
+    </DashboardErrorBoundary>
   );
 }
 

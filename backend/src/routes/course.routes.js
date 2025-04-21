@@ -29,24 +29,19 @@ router.route("/classes/teacher/:teacherId").get(authTeacher, teacherEnrolledCour
 
 router.route("/:courseId/videos").get(
     async (req, res, next) => {
-        let isAuthenticated = false;
         try {
-            // Try student auth first
-            await authSTD(req, res, () => {
-                isAuthenticated = true;
+            // Try teacher auth first since they're more likely to access videos
+            await authTeacher(req, res, () => {
                 next();
             });
         } catch (error) {
             try {
-                // If student auth fails, try teacher auth
-                await authTeacher(req, res, () => {
-                    isAuthenticated = true;
+                // If teacher auth fails, try student auth
+                await authSTD(req, res, () => {
                     next();
                 });
             } catch (innerError) {
-                if (!isAuthenticated) {
-                    next(new ApiError(401, "Authentication required"));
-                }
+                next(new ApiError(401, "Authentication required"));
             }
         }
     },

@@ -1,142 +1,6 @@
-// import React, { useState } from 'react'
-// import { useParams } from 'react-router-dom';
-
-// function Popup({onClose, subject}) {
-//   const [desc, setDesc] = useState('');
-//   const { ID } = useParams();
-//   const dateGap = 3;
-
-//   const [day, setDay] = useState({
-//       "sun": false,
-//       "mon": false,
-//       "tue": false,
-//       "wed": false,
-//       "thu": false,
-//       "fri": false,
-//       "sat": false,
-//   });
-
-//   const [dayValue, setDayValue] = useState({
-//       "sun": "",
-//       "mon": "",
-//       "tue": "",
-//       "wed": "",
-//       "thu": "",
-//       "fri": "",
-//       "sat": "",
-//   });
-
-//   const dayIndex = {
-//       "sun": 0,
-//       "mon": 1,
-//       "tue": 2,
-//       "wed": 3,
-//       "thu": 4,
-//       "fri": 5,
-//       "sat": 6,
-//   };
-
-//   const handleCheckboxChange = (dayName) => {
-//     setDay(prevDay => ({ ...prevDay, [dayName]: !prevDay[dayName] }));
-//   };
-
-//   const addCourse = async()=>{
-//     const selectedDays = Object.keys(day)
-//         .filter(d => day[d])
-//         .map(d => ({
-//             "Day": dayIndex[d],
-//             "Start Time": dayValue[d] ? dayValue[d] * 60 : null,
-//             "End Time": dayValue[d] ? (parseInt(dayValue[d], 10) + dateGap) * 60 : null,
-//           }));
-
-//     const hasMissingTime = selectedDays.some(d => d["Start Time"] === null);
-
-//     if (hasMissingTime) {
-//       alert("Please fill in the time for all selected days.");
-//       return;
-//     }
-
-//     ///////////////////////
-//     if(desc == ''){
-//       alert('Fill The Description');
-//     }else{
-//       onClose();
-
-//       const data = {
-//         coursename: subject.toLowerCase(),
-//         description: desc,
-//         time: selectedDays,
-//       }
-
-//       //call api 
-
-//       const response = await fetch(`/api/course/${subject}/create/${ID}`, {
-//         method: 'POST',
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify(data),
-//       });
-
-//       const responesData = await response.json();
-
-//       console.log(responesData);
-//       alert(responesData.message);
-
-//     }
-//   }
-
-//   return (
-//     <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex justify-center'>
-//         <div className='bg-[#008280] w-[30rem] h-fit py-4 mt-1 rounded-md'>
-//           <div className=' absolute w-9 h-9 bg-white rounded-xl cursor-pointer flex items-center justify-center m-2' onClick={onClose}>✖️</div>
-//           <div className=' text-center my-10 text-white text-3xl font-semibold'>
-//             <p>{subject}</p>
-//           </div>
-//           <div className='m-5 flex flex-col gap-4 text-white text-xl'>
-//             <div>
-//               <label htmlFor="">Coursename : </label>
-//               <input 
-//                 type="text" 
-//                 className="bg-[#32B0AE] p-2 rounded-md w-52 border-0 outline-0"
-//                 value={subject}
-//                 readOnly
-//               />
-//             </div>
-            
-//             <label>Timing : </label>
-//             {Object.keys(day).map((d) => (
-//                 <div key={d} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px"}}>
-//                     <input type="checkbox" checked={day[d]} onChange={() => handleCheckboxChange(d)} />
-//                     <label>{d.charAt(0).toUpperCase() + d.slice(1)}</label>
-//                     <input className='w-[7rem] rounded-sm text-black placeholder:text-gray pl-2' type="time" rounded-sme="text" placeholder='Start Time' value={dayValue[d]} onChange={(e) => setDayValue({ ...dayValue, [d]: e.target.value })} />
-//                     <input className='w-[7rem] rounded-sm text-black placeholder:text-gray pl-2' type="time"  placeholder="End Time" value={(parseInt(dayValue[d], 10) + dateGap)} />
-//                 </div>
-//             ))}
-
-//             <div>
-//               <label htmlFor="">Description : </label>
-//               <input type="text"
-//               value={desc}
-//               onChange={(e) => setDesc(e.target.value)}
-//               className="bg-[#32B0AE] p-2 rounded-md w-52 ml-3 border-0 outline-0" 
-//               />
-//             </div>
-//           </div>
-
-//           <div className='flex items-center justify-center mt-7'>
-//             <span onClick={addCourse} className='bg-[#335699] text-white px-10 py-3 rounded-md text-xl cursor-pointer'>
-//               Create Course
-//             </span>
-//           </div>
-//         </div>
-//     </div>
-//   )
-// }
-
-// export default Popup
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import Modal from '../Components/Modal';
 
 function Popup({ onClose, subject }) {
   const [desc, setDesc] = useState('');
@@ -174,75 +38,56 @@ function Popup({ onClose, subject }) {
   };
 
   const handleCheckboxChange = (dayName) => {
-    setDay((prevDay) => ({ ...prevDay, [dayName]: !prevDay[dayName] }));
+    setDay(prevDay => ({ ...prevDay, [dayName]: !prevDay[dayName] }));
   };
 
   const addCourse = async () => {
     const selectedDays = Object.keys(day)
-      .filter((d) => day[d])
-      .map((d) => ({
+      .filter(d => day[d])
+      .map(d => ({
         day: dayIndex[d],
         starttime: dayValue[d] ? convertTimeToMinutes(dayValue[d]) : null,
         endtime: dayValue[d] ? convertTimeToMinutes(dayValue[d]) + dateGap * 60 : null,
       }));
 
-    const hasMissingTime = selectedDays.some((d) => d.starttime === null);
+    const hasMissingTime = selectedDays.some(d => d.starttime === null);
 
     if (hasMissingTime) {
       alert('Please fill in the time for all selected days.');
       return;
     }
 
-    const invalidTimeRange = selectedDays.some((d) => {
-      const startTime = d.starttime;
-      const endTime = d.endtime;
-      if (startTime >= endTime) {
-        alert('Start time must be earlier than end time.');
-        return true;
-      }
-      if ((endTime - startTime) > 3 * 60) {
-        alert('End time should not be more than 3 hours after start time.');
-        return true;
-      }
-      return false;
-    });
-
-    if (invalidTimeRange) {
-      return;
-    }
-
     if (desc === '') {
-      alert('Fill the description.');
+      alert('Fill The Description');
       return;
     }
-
-    if(selectedDays.length === 0){
-      alert('pls! select any day and time.');
-      return;
-    }
-
-    onClose();
 
     const data = {
       coursename: subject.toLowerCase(),
       description: desc,
-      schedule: selectedDays,
+      time: selectedDays,
     };
 
-    console.log(data);
+    try {
+      const response = await fetch(`/api/course/${subject}/create/${ID}`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-    // Call API
-    const response = await fetch(`/api/course/${subject}/create/${ID}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Failed to create course');
+      }
 
-    const responseData = await response.json();
-    console.log(responseData);
-    alert(responseData.message);
+      alert(responseData.message);
+      onClose();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const convertTimeToMinutes = (time) => {
@@ -257,85 +102,72 @@ function Popup({ onClose, subject }) {
   };
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex justify-center'>
-      <div className='bg-[#008280] w-[30rem] h-fit py-4 mt-1 rounded-md'>
-        <div
-          className='absolute w-9 h-9 bg-white rounded-xl cursor-pointer flex items-center justify-center m-2'
-          onClick={onClose}
-        >
-          ✖️
-        </div>
-        <div className='text-center my-10 text-white text-3xl font-semibold'>
-          <p>{subject}</p>
-        </div>
-        <div className='m-5 flex flex-col gap-4 text-white text-xl'>
-          <div>
-            <label htmlFor=''>Coursename: </label>
-            <input
-              type='text'
-              className='bg-[#32B0AE] p-2 rounded-md w-52 border-0 outline-0'
-              value={subject}
-              readOnly
-            />
-          </div>
-
-          <label>Timing: </label>
+    <Modal title={`Create ${subject} Course`} onClose={onClose}>
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <label className="block text-gray-700 dark:text-gray-300 mb-2">Class Schedule</label>
           {Object.keys(day).map((d) => (
             <div
               key={d}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-              }}
+              className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-[#042439] rounded-lg"
             >
-              <input
-                type='checkbox'
-                checked={day[d]}
-                onChange={() => handleCheckboxChange(d)}
-              />
-              <label>{d.charAt(0).toUpperCase() + d.slice(1)}</label>
-              <input
-                className='w-[7rem] rounded-sm text-black placeholder:text-gray pl-2'
-                type='time'
-                placeholder='Start Time'
-                value={dayValue[d]}
-                onChange={(e) =>
-                  setDayValue({ ...dayValue, [d]: e.target.value })
-                }
-              />
-              <input
-                className='w-[7rem] rounded-sm text-black placeholder:text-gray pl-2'
-                type='time'
-                readOnly
-                placeholder='End Time'
-                value={dayValue[d] ? convertMinutesToTime(convertTimeToMinutes(dayValue[d]) + dateGap * 60) : ''}
-              />
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={day[d]}
+                  onChange={() => handleCheckboxChange(d)}
+                  className="w-4 h-4 text-[#4E84C1] border-gray-300 rounded focus:ring-[#4E84C1]"
+                />
+                <label className="ml-2 text-gray-700 dark:text-gray-300">
+                  {d.charAt(0).toUpperCase() + d.slice(1)}
+                </label>
+              </div>
+              
+              <div className="flex gap-4 flex-1">
+                <input
+                  type="time"
+                  placeholder="Start Time"
+                  value={dayValue[d]}
+                  onChange={(e) => setDayValue({ ...dayValue, [d]: e.target.value })}
+                  disabled={!day[d]}
+                  className="flex-1 px-3 py-2 rounded-md bg-white dark:bg-[#0a3553] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4E84C1] disabled:opacity-50"
+                />
+                <input
+                  type="time"
+                  readOnly
+                  placeholder="End Time"
+                  value={dayValue[d] ? convertMinutesToTime(convertTimeToMinutes(dayValue[d]) + dateGap * 60) : ''}
+                  disabled={!day[d]}
+                  className="flex-1 px-3 py-2 rounded-md bg-white dark:bg-[#0a3553] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4E84C1] disabled:opacity-50"
+                />
+              </div>
             </div>
           ))}
-
-          <div>
-            <label htmlFor=''>Description: </label>
-            <input
-              type='text'
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              className='bg-[#32B0AE] p-2 rounded-md w-52 ml-3 border-0 outline-0'
-            />
-          </div>
         </div>
 
-        <div className='flex items-center justify-center mt-7'>
-          <span
+        <div>
+          <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            Course Description
+          </label>
+          <textarea
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder="Enter course description"
+            rows={4}
+            className="w-full px-3 py-2 rounded-md bg-gray-50 dark:bg-[#042439] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4E84C1]"
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <button
             onClick={addCourse}
-            className='bg-[#335699] text-white px-10 py-3 rounded-md text-xl cursor-pointer'
+            className="px-6 py-2 bg-[#4E84C1] hover:bg-[#3a6da3] text-white rounded-lg transition-colors"
           >
             Create Course
-          </span>
+          </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

@@ -121,25 +121,32 @@ teacherSchema.methods.isPasswordCorrect = async function (Password){
 }
 
 teacherSchema.methods.generateAccessToken = function(){
-    return jwt.sign({
-        _id:this._id,
-        Email:this.Email,
-    },
-    process.env.ACCESS_TOKEN_SECRET,{
-        expiresIn:process.env.ACCESS_TOKEN_EXPIRY
-    })
+    return jwt.sign(
+        {
+            _id: this._id,
+            Email: this.Email,
+            type: 'teacher'
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
 }
 
 teacherSchema.methods.generateRefreshToken = function(){
-    return jwt.sign({
-        _id:this._id,
-        Email:this.Email,
-    },
-    process.env.REFRESH_TOKEN_SECRET,{
-        expiresIn:process.env.REFRESH_TOKEN_EXPIRY
-    })
+    return jwt.sign(
+        {
+            _id: this._id,
+            Email: this.Email,
+            type: 'teacher'
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
 }
-
 
 teacherSchema.methods.generateResetToken =async function(){
 

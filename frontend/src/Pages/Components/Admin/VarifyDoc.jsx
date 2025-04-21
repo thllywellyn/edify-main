@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from '../../../context/AuthContext';
 import logo from '../../Images/logo.svg';
 
 const VarifyDoc = () => {
@@ -7,6 +8,7 @@ const VarifyDoc = () => {
   const [error, setError] = useState("");
   const { type, adminID, ID } = useParams();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,7 +52,7 @@ const VarifyDoc = () => {
         </div>
 
         <button 
-          onClick={() => navigate('/')} 
+          onClick={logout} 
           className="bg-[#4E84C1] text-white px-6 py-2 rounded-lg hover:bg-[#3a6da3] transition-all duration-200 font-semibold"
         >
           Logout

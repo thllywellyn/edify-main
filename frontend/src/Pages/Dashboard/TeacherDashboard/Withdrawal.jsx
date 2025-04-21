@@ -1,63 +1,82 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import Modal from '../Components/Modal';
 
-function Withdrawal({onClose,TA}) {
+function Withdrawal({ onClose, TA }) {
   const { ID } = useParams();
-  const [amount, setAmount] = useState(0);
-  const [accName, setAccName] = useState('');
-  const [accNumber, setAccNumber] = useState('');
-  const [ifc, setIfc] = useState('');
+  const [amount, setamount] = useState(0);
 
-  const handleWithdrawl = async()=>{
-    if(accName == '' || accNumber == '' || ifc == ''){
-      alert('All filds are required')
-    }else if(TA < amount){
-      alert('Insufficient Amount')
-    }else if(amount < 0){
-      alert('Enter a valid Amount')
-    }else{
-      try {
-        const response = await fetch(`/api/payment/teacher/${ID}/withdraw`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({amount : amount})
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-
-        const user = await response.json();
-        // setAmount(user.data.newTeacher.Balance);
-        console.log(user)
-        onClose();
-      } catch (error) {
-        // setError(error.message)
-        console.log(error);
-      }
+  const withdraw = async () => {
+    if (amount <= 0) {
+      alert('Enter valid amount!');
+      return;
     }
-  }
+
+    if (amount > TA) {
+      alert('Insufficient balance!');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/payment/teacher/${ID}/withdraw`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount }),
+      });
+
+      const res = await response.json();
+
+      if (!response.ok) {
+        throw new Error(res.message || 'Failed to process withdrawal');
+      }
+
+      alert(res.message);
+      if (res.statusCode === 200) {
+        onClose();
+      }
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center'>
-        <div className=' bg-blue-600 w-80 h-96 rounded-md'>
-            <div className=' absolute w-9 h-9 bg-white rounded-xl cursor-pointer flex items-center justify-center m-2' onClick={onClose}>✖️</div>
-            <div className='flex flex-col items-center justify-center mt-10 font-semibold'>
-                <h1 className='text-2xl mb-10'>Remuneration</h1>
-                
-                <input type="text" placeholder='Amount' className="p-2 mb-3 rounded-md w-56 border-0 outline-0 text-gray-800" value={amount} onChange={(e)=>setAmount(e.target.value)}/>
-                <input type="text" placeholder='Ac Holder Name' className="p-2 mb-3 rounded-md w-56 border-0 outline-0 text-gray-800" value={accName} onChange={(e)=>setAccName(e.target.value)}/>
-                <input type="text" placeholder='Account Number' className="p-2 mb-3 rounded-md w-56 border-0 outline-0 text-gray-800" value={accNumber} onChange={(e)=>setAccNumber(e.target.value)}/>
-                <input type="text" placeholder='IFC Code' className="p-2 mb-5 rounded-md w-56 border-0 outline-0 text-gray-800" value={ifc} onChange={(e)=>setIfc(e.target.value)}/>
-
-                <div onClick={handleWithdrawl} className='bg-green-700 py-2 px-5 rounded-md cursor-pointer'>Withdrawal</div>
-                
-            </div>
+    <Modal title="Withdraw Balance" onClose={onClose}>
+      <div className="space-y-6">
+        <div>
+          <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            Available Balance
+          </label>
+          <div className="px-4 py-3 bg-gray-50 dark:bg-[#042439] rounded-lg text-xl font-semibold text-gray-900 dark:text-white">
+            ₹{TA}
+          </div>
         </div>
-    </div>
-  )
+
+        <div>
+          <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            Withdrawal Amount
+          </label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setamount(Number(e.target.value))}
+            placeholder="Enter amount to withdraw"
+            className="w-full px-3 py-2 rounded-md bg-gray-50 dark:bg-[#042439] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4E84C1]"
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={withdraw}
+            className="px-6 py-2 bg-[#4E84C1] hover:bg-[#3a6da3] text-white rounded-lg transition-colors"
+          >
+            Withdraw
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
-export default Withdrawal
+export default Withdrawal;

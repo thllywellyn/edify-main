@@ -4,15 +4,18 @@ import { NavLink, useNavigate, useParams } from "react-router-dom";
 import logo from '../../Images/logo.svg'
 import Course from "./Course";
 import axios from "axios";
+import { useAuth } from '../../../context/AuthContext';
 
 const Admin = () => {
   const { data } = useParams();
   const navigator = useNavigate();
+  const { logout } = useAuth();
 
   const [StudentData, setStudentData] = useState([]);
   const [TeacherData, setTeacherData] = useState([]);
   const [adminID, setAdminID] = useState(null);
   const [error, setErrors] = useState("");
+  const [loading, setLoading] = useState(false);
   const [allmsg, setAllMsg] = useState([]);
   const [open, setOpen] = useState(false);
 
@@ -65,6 +68,7 @@ const Admin = () => {
 
   useEffect(() => {
     const getData = async () => {
+      setLoading(true);
       try {
         const response = await fetch(`/api/admin/${data}/approve`, {
           method: "POST",
@@ -74,20 +78,43 @@ const Admin = () => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch data");
-        } else {
-          const result = await response.json();
-
-          setStudentData(result.data.studentsforApproval);
-          setTeacherData(result.data.teachersforApproval);
-          setAdminID(result.data.admin._id);
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch data");
         }
+
+        const result = await response.json();
+        setStudentData(result.data.studentsforApproval);
+        setTeacherData(result.data.teachersforApproval);
+        setAdminID(result.data.admin._id);
+        setErrors("");
+
       } catch (err) {
-        console.log(err.message);
+        setErrors("Failed to load user data. Please try again later.");
+        console.error("Error fetching data:", err.message);
+      } finally {
+        setLoading(false);
       }
     };
     getData();
-  }, []);
+  }, [data]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#042439] via-[#0a3553] to-[#042439] flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#042439] via-[#0a3553] to-[#042439] flex items-center justify-center">
+        <div className="bg-red-500/10 backdrop-blur-md p-4 rounded-lg border border-red-500">
+          <p className="text-red-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#042439] via-[#0a3553] to-[#042439]">
@@ -107,7 +134,7 @@ const Admin = () => {
           </div>
 
           <button
-            onClick={() => navigator('/')}
+            onClick={logout}
             className="bg-[#4E84C1] text-white px-6 py-2 rounded-lg hover:bg-[#3a6da3] transition-all duration-200 font-semibold"
           >
             Logout

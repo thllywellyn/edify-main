@@ -1,14 +1,13 @@
-import React from 'react'
-import {Outlet} from 'react-router-dom'
-import TeacherDashboard from './TeacherDashboard'
+import React from 'react';
+import CommonDashboard from '../Common/CommonDashboard';
+import DashboardErrorBoundary from '../Common/DashboardErrorBoundary';
 
 function TeacherLayout() {
   return (
-    <>
-    <TeacherDashboard/>
-    <Outlet/>
-    </>
-  )
+    <DashboardErrorBoundary>
+      <CommonDashboard userType="Teacher" />
+    </DashboardErrorBoundary>
+  );
 }
 
-export default TeacherLayout
+export default TeacherLayout;
