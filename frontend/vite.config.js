@@ -11,7 +11,10 @@ export default defineConfig({
       }
     },
     port: 5173,
-    open: true
+    open: true,
+    fs: {
+      strict: false // Allow serving files from outside the root directory
+    }
   },
   plugins: [react()],
   build: {

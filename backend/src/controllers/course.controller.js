@@ -6,6 +6,7 @@ import { Teacher } from "../models/teacher.model.js";
 import {Sendmail} from "../utils/Nodemailer.js";
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import fs from 'fs';
+import { createNotification } from "./notification.controller.js";
 
 const getCourse = asyncHandler(async(req,res)=>{
     const courses = await course.find(
@@ -207,10 +208,23 @@ const addCourseStudent = asyncHandler(async(req,res)=>{
 
   const teacherID = selectedCourse.enrolledteacher
 
+  // Create notification for teacher
+  await createNotification(
+    teacherID,
+    'teachers',
+    'New Student Enrolled',
+    `${loggedStudent.Firstname} ${loggedStudent.Lastname} has enrolled in your ${selectedCourse.coursename} course.`,
+    'info',
+    `/dashboard/teacher/${teacherID}/courses`
+  );
+
   const teacher = await Teacher.findByIdAndUpdate(teacherID,
     {
       $push: {
-        enrolledStudent:loggedStudent._id
+        enrolledStudent: {
+          studentId: loggedStudent._id,
+          isNewEnrolled: true
+        }
       }
     }, {
       new: true
@@ -352,6 +366,21 @@ const addClass = asyncHandler(async(req,res) => {
   if(!enrolledCourse){
   throw new ApiError(400, "error occured while adding the class")
   }
+
+  // Create notifications for enrolled students
+  const studentsToNotify = enrolledCourse.enrolledStudent || [];
+  const promises = studentsToNotify.map(studentId => 
+    createNotification(
+      studentId,
+      'students',
+      'New Class Scheduled',
+      `A new class "${title}" has been scheduled for ${enrolledCourse.coursename} on ${new Date(date).toLocaleDateString()}.`,
+      'info',
+      `/dashboard/student/${studentId}/classes`
+    )
+  );
+
+  await Promise.all(promises);
 
   return res
   .status(200)
@@ -523,7 +552,7 @@ const canStudentEnroll = asyncHandler(async(req,res)=>{
 
 const addCourseVideo = asyncHandler(async (req, res) => {
     const { courseId } = req.params;
-    const { title, description } = req.body;
+    const { title, description, isPublished = false } = req.body;
 
     if (!courseId || !title || !description || !req.file) {
         throw new ApiError(400, "Missing required fields");
@@ -556,7 +585,8 @@ const addCourseVideo = asyncHandler(async (req, res) => {
         title,
         description,
         url: cloudinaryResponse.url,
-        duration: cloudinaryResponse.duration || 0
+        duration: cloudinaryResponse.duration || 0,
+        isPublished
     };
 
     const updatedCourse = await course.findByIdAndUpdate(
@@ -572,32 +602,137 @@ const addCourseVideo = asyncHandler(async (req, res) => {
 
 const getCourseVideos = asyncHandler(async (req, res) => {
     const { courseId } = req.params;
-    const user = req.Student || req.teacher;
+    const { teacherId, studentId } = req.query;
 
     if (!courseId) {
         throw new ApiError(400, "Course ID is required");
     }
 
-    // First find the course
-    const courseWithVideos = await course.findById(courseId);
-    
+    if (!teacherId && !studentId) {
+        throw new ApiError(400, "Either teacher ID or student ID is required");
+    }
+
+    const courseWithVideos = await course.findById(courseId)
+        .populate('enrolledteacher', '-Password -Refreshtoken')
+        .populate('enrolledStudent', '_id');
+
     if (!courseWithVideos) {
         throw new ApiError(404, "Course not found");
     }
 
-    // Check access based on user type and enrollment
-    const isTeacher = req.teacher?._id?.toString() === courseWithVideos.enrolledteacher?.toString();
-    const isStudent = req.Student && courseWithVideos.enrolledStudent?.some(
-        studentId => studentId.toString() === req.Student._id.toString()
+    // Teacher access
+    if (teacherId) {
+        if (courseWithVideos.enrolledteacher._id.toString() !== teacherId) {
+            throw new ApiError(403, "Not authorized to access these videos");
+        }
+
+        return res.status(200).json(new ApiResponse(200, {
+            videos: courseWithVideos.videos || [],
+            isTeacher: true
+        }, "Videos retrieved successfully"));
+    }
+
+    // Student access
+    if (studentId) {
+        const isEnrolled = courseWithVideos.enrolledStudent.some(
+            student => student._id.toString() === studentId
+        );
+
+        if (!isEnrolled) {
+            throw new ApiError(403, "You must be enrolled in this course to view videos");
+        }
+
+        const accessibleVideos = courseWithVideos.videos
+            .filter(video => video.isPublished)
+            .map(({ _id, title, description, url, duration, isPublished }) => ({
+                _id,
+                title,
+                description,
+                url,
+                duration,
+                isPublished
+            }));
+
+        return res.status(200).json(new ApiResponse(200, {
+            videos: accessibleVideos,
+            isTeacher: false
+        }, "Videos retrieved successfully"));
+    }
+});
+
+const updateVideoVisibility = asyncHandler(async (req, res) => {
+    const { courseId, videoId } = req.params;
+    const { isPublished } = req.body;
+
+    if (!courseId || !videoId || typeof isPublished !== 'boolean') {
+        throw new ApiError(400, "Missing required fields");
+    }
+
+    const courseExists = await course.findById(courseId);
+    if (!courseExists) {
+        throw new ApiError(404, "Course not found");
+    }
+
+    // Verify teacher is authorized for this course
+    if (courseExists.enrolledteacher.toString() !== req.teacher._id.toString()) {
+        throw new ApiError(403, "Not authorized to modify videos in this course");
+    }
+
+    const updatedCourse = await course.findOneAndUpdate(
+        { 
+            _id: courseId,
+            "videos._id": videoId 
+        },
+        { 
+            $set: { "videos.$.isPublished": isPublished } 
+        },
+        { new: true }
     );
 
-    if (!isTeacher && !isStudent) {
-        throw new ApiError(403, "Unauthorized access to course videos");
+    if (!updatedCourse) {
+        throw new ApiError(404, "Video not found");
     }
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { videos: courseWithVideos.videos }, "Videos retrieved successfully"));
+        .json(new ApiResponse(200, updatedCourse, "Video visibility updated successfully"));
+});
+
+const updateCourse = asyncHandler(async(req, res) => {
+    const { courseId } = req.params;
+    const { coursename, description, price, schedule } = req.body;
+    
+    if (!courseId) {
+        throw new ApiError(400, "Course ID is required");
+    }
+
+    const existingCourse = await course.findById(courseId);
+    if (!existingCourse) {
+        throw new ApiError(404, "Course not found");
+    }
+
+    // Verify teacher owns this course
+    if (existingCourse.enrolledteacher.toString() !== req.teacher._id.toString()) {
+        throw new ApiError(403, "Not authorized to edit this course");
+    }
+
+    // Update all fields
+    const updatedCourse = await course.findByIdAndUpdate(
+        courseId,
+        { 
+            $set: { 
+                coursename: coursename.toLowerCase(),
+                description,
+                price,
+                schedule 
+            }
+        },
+        { new: true }
+    );
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updatedCourse, "Course updated successfully"));
 });
 
 export { 
@@ -612,7 +747,9 @@ export {
     teacherEnrolledCoursesClasses, 
     canStudentEnroll,
     addCourseVideo,
-    getCourseVideos
+    getCourseVideos,
+    updateVideoVisibility,
+    updateCourse
 }
 
 

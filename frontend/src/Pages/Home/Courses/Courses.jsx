@@ -5,6 +5,7 @@ import Header from '../Header/Header'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import CourseVideos from '../../Dashboard/Components/CourseVideos'
+import PaymentModal from '../../Components/PaymentModal'
 
 function Courses() {
   const [courses, setCourses] = useState([]);
@@ -13,6 +14,8 @@ function Courses() {
   const [activeSchedule, setActiveSchedule] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentCourse, setSelectedPaymentCourse] = useState(null);
   const navigate = useNavigate();
   const auth = useAuth();
 
@@ -23,10 +26,8 @@ function Courses() {
     try {
       let endpoint;
       if (auth.user?.type === 'teacher') {
-        // For teachers, fetch their own courses
         endpoint = `/api/course/teacher/${auth.user._id}/enrolled`;
       } else {
-        // For students and visitors, fetch all approved courses
         endpoint = subject === 'all' ? '/api/course/all' : `/api/course/${subject}`;
       }
       
@@ -60,11 +61,10 @@ function Courses() {
     }
 
     if (auth.user.type === 'teacher') {
-      return; // Teachers can't enroll in courses
+      return;
     }
 
     try {
-      // First verify if student can enroll
       const verifyResponse = await fetch(
         `/api/course/${course.coursename}/${course._id}/verify/student/${auth.user._id}`,
         {
@@ -78,13 +78,22 @@ function Courses() {
 
       if (!verifyResponse.ok) {
         const error = await verifyResponse.json();
-        alert(error.message || 'Cannot enroll in this course');
-        return;
+        throw new Error(error.message || 'Cannot enroll in this course');
       }
 
-      // If verification passes, proceed to enrollment
-      const response = await fetch(
-        `/api/course/${course.coursename}/${course._id}/add/student/${auth.user._id}`,
+      setSelectedPaymentCourse(course);
+      setShowPaymentModal(true);
+
+    } catch (error) {
+      console.error('Error in enrollment process:', error);
+      alert(error.message || 'Failed to process enrollment');
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentDetails) => {
+    try {
+      const enrollResponse = await fetch(
+        `/api/course/${selectedPaymentCourse.coursename}/${selectedPaymentCourse._id}/add/student/${auth.user._id}`,
         {
           method: 'POST',
           credentials: 'include',
@@ -94,16 +103,16 @@ function Courses() {
         }
       );
 
-      const data = await response.json();
-      if (response.ok) {
-        alert('Successfully enrolled in the course!');
-        fetchCourses(selectedSubject); // Refresh the course list
-      } else {
-        alert(data.message || 'Failed to enroll in the course');
+      if (!enrollResponse.ok) {
+        const enrollError = await enrollResponse.json();
+        throw new Error(enrollError.message || 'Failed to complete enrollment');
       }
+
+      alert('Successfully enrolled in the course!');
+      fetchCourses(selectedSubject);
     } catch (error) {
-      console.error('Error enrolling in course:', error);
-      alert('Failed to enroll in the course');
+      console.error('Enrollment error:', error);
+      alert(error.message || 'Failed to complete enrollment');
     }
   };
 
@@ -112,11 +121,14 @@ function Courses() {
     setShowSchedule(true);
   };
 
+  const isEnrolled = (course) => {
+    return course.enrolledStudent?.some(studentId => studentId === auth.user?._id);
+  };
+
   return (
     <>
       <Header />
       <div className="min-h-screen bg-[#042439] pb-8">
-        {/* Hero Section */}
         <div className="w-full bg-[#0E3A59] py-12 mb-8">
           <div className="w-full max-w-[2000px] mx-auto px-4">
             <h1 className="text-4xl font-bold text-white mb-4">
@@ -130,9 +142,7 @@ function Courses() {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="w-full max-w-[2000px] mx-auto px-4">
-          {/* Subject Filter Buttons - Only show for non-teachers */}
           {auth.user?.type !== 'teacher' && (
             <div className="flex flex-wrap gap-3 mb-8">
               {['all', 'physics', 'chemistry', 'biology', 'math', 'computer'].map(subject => (
@@ -151,7 +161,6 @@ function Courses() {
             </div>
           )}
 
-          {/* Courses Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {loading ? (
               <div className="text-white text-center col-span-full text-xl py-12">
@@ -201,16 +210,24 @@ function Courses() {
 
                       {selectedCourse === course._id && (
                         <div className="border-t border-[#9433E0]/20 pt-4">
-                          <CourseVideos courseId={course._id} />
+                          <CourseVideos 
+                            courseId={course._id} 
+                            studentId={auth.user?._id}
+                          />
                         </div>
                       )}
                       
                       {auth.user?.type !== 'teacher' && (
                         <button
-                          onClick={() => handleEnroll(course)}
-                          className="w-full bg-[#9433E0] hover:bg-[#7928b8] text-white px-4 py-3 rounded-md transition-colors text-sm font-medium flex items-center justify-center h-11"
+                          onClick={() => !isEnrolled(course) && handleEnroll(course)}
+                          className={`w-full ${
+                            isEnrolled(course) 
+                              ? 'bg-green-600 cursor-not-allowed' 
+                              : 'bg-[#9433E0] hover:bg-[#7928b8]'
+                          } text-white px-4 py-3 rounded-md transition-colors text-sm font-medium flex items-center justify-center h-11`}
+                          disabled={isEnrolled(course)}
                         >
-                          Enroll Now
+                          {isEnrolled(course) ? 'Enrolled' : 'Enroll Now'}
                         </button>
                       )}
                       
@@ -228,7 +245,6 @@ function Courses() {
           </div>
         </div>
 
-        {/* Schedule Modal */}
         {showSchedule && activeSchedule && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-[#0E3A59] rounded-lg p-6 w-[800px] max-w-[90%] border border-[#9433E0]/20">
@@ -265,6 +281,18 @@ function Courses() {
               </table>
             </div>
           </div>
+        )}
+
+        {showPaymentModal && selectedPaymentCourse && (
+          <PaymentModal
+            onClose={() => {
+              setShowPaymentModal(false);
+              setSelectedPaymentCourse(null);
+            }}
+            amount={selectedPaymentCourse.price * 100}
+            courseName={selectedPaymentCourse.coursename.toUpperCase()}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
         )}
       </div>
       <Footer />

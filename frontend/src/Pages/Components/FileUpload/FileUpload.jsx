@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 const FileUpload = ({ label, onFileChange, value }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
 
   const uploadFile = async (file) => {
     setIsUploading(true);
@@ -12,7 +13,7 @@ const FileUpload = ({ label, onFileChange, value }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:8000/api/upload', {
+      const response = await fetch('http://localhost:5173/api/upload', {
         method: 'POST',
         body: formData,
         onUploadProgress: (progressEvent) => {
@@ -40,11 +41,15 @@ const FileUpload = ({ label, onFileChange, value }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setError('File size should be less than 5MB');
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setError('File size should be less than 10MB');
         return;
       }
       uploadFile(file);
+      // Reset the file input value so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -52,6 +57,9 @@ const FileUpload = ({ label, onFileChange, value }) => {
     onFileChange('');
     setUploadProgress(0);
     setError('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -59,6 +67,7 @@ const FileUpload = ({ label, onFileChange, value }) => {
       <label className="text-white ml-7 font-bold">{label}</label>
       <div className="mt-3 relative">
         <input
+          ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,application/pdf"
           className="absolute inset-0 z-50 opacity-0 cursor-pointer"

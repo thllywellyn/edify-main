@@ -5,11 +5,13 @@ import Popup from './Popup';
 import VideoUpload from './VideoUpload';
 import CourseVideos from '../Components/CourseVideos';
 import CourseCard from '../Components/CourseCard';
+import EditCourse from './EditCourse';
 
 function TeacherCourses() {
   const [showPopup, setShowPopup] = useState(false);
   const [showVideoUpload, setShowVideoUpload] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [editingCourse, setEditingCourse] = useState(null);
   const [subject, setSubject] = useState('');
   const [courses, setCourses] = useState([]);
   const { ID } = useParams();
@@ -43,6 +45,37 @@ function TeacherCourses() {
   const createCourse = (sub) => {
     setSubject(sub);
     setShowPopup(true);
+  };
+
+  const handleEditCourse = (course) => {
+    setEditingCourse(course);
+  };
+
+  const handleUpdateCourse = async (courseId, updatedData) => {
+    try {
+      const response = await fetch(`/api/course/${courseId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to update course');
+      }
+
+      // Refresh courses list
+      const updatedCourses = courses.map(c => 
+        c._id === courseId ? { ...c, ...updatedData } : c
+      );
+      setCourses(updatedCourses);
+      setEditingCourse(null);
+    } catch (error) {
+      console.error('Error updating course:', error);
+      throw error; // Re-throw to be handled by the EditCourse component
+    }
   };
 
   const subjects = [
@@ -98,11 +131,12 @@ function TeacherCourses() {
                       onVideoClick={() => handleCourseClick(course)}
                       showEnrollments={true}
                       isTeacher={true}
+                      onEdit={() => handleEditCourse(course)}
                     />
                     
                     {selectedCourse === course._id && (
                       <div className="mt-4 p-4 border-t border-gray-200 dark:border-gray-700">
-                        <CourseVideos courseId={course._id} />
+                        <CourseVideos courseId={course._id} isTeacherView={true} />
                       </div>
                     )}
                   </div>
@@ -125,6 +159,13 @@ function TeacherCourses() {
             setSelectedCourse(null);
             setTimeout(() => setSelectedCourse(current), 100);
           }}
+        />
+      )}
+      {editingCourse && (
+        <EditCourse
+          course={editingCourse}
+          onClose={() => setEditingCourse(null)}
+          onUpdate={handleUpdateCourse}
         />
       )}
     </div>

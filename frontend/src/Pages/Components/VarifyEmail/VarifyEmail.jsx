@@ -1,9 +1,22 @@
 import React from 'react'
 import Email from '../../Images/email.svg'
-import { NavLink } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import Header from '../../Home/Header/Header'
+import { useAuth } from '../../../context/AuthContext'
 
 function VarifyEmail() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBackToLogin = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   return (
     <>
     <Header/>
@@ -12,9 +25,12 @@ function VarifyEmail() {
             <img src={Email} width={150} alt="email" />
             <p className='text-white text-3xl'>Send Email</p>
             <p className='text-gray-300 mx-7 text-sm'>We have sent a verification link to your Email. Click on the link to complete the verification process. You might need to check your spam folder.</p>
-            <NavLink to='/login'>
-                <p className=' text-blue-700'>◀ Back to Login</p>
-            </NavLink>
+            <button 
+              onClick={handleBackToLogin}
+              className='text-blue-700 hover:text-blue-500 transition-colors cursor-pointer flex items-center'
+            >
+              ◀ Back to Login
+            </button>
         </div>
     </div>
     </>

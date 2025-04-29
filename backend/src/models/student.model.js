@@ -1,193 +1,154 @@
-import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import mongoose, { Schema } from "mongoose";
+import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
 import crypto from "crypto"
 
-
-const studentSchema = new mongoose.Schema({
-
-    Email:{
-        type:String,
-        required:true,
-        unique:true,
-        trim:true,
-        lowercase:true,
-        index:true,
-    },
-
-    Firstname:{
-        type:String,
-        required:true,
-        trim:true,
-        
-    },
-
-    Lastname:{
-        type:String,
-        required:true,
-        trim:true,
-    },
-
-    Password:{
-        type:String,
+const studentSchema = new Schema({
+    Firstname: {
+        type: String,
         required: true,
     },
-
-    Isverified: {
-        type:Boolean,
-        default:false,
-    },
-
-    Isapproved:{
+    Lastname: {
         type: String,
-        enum: ['approved', 'rejected', 'pending', 'reupload'],
-        default: 'pending',
+        required: true,
     },
-
-    Remarks:{
-        type:String
+    Email: {
+        type: String,
+        required: true,
+        unique: true,
     },
-    
-    Refreshtoken:{
-        type:String,
+    Password: {
+        type: String,
+        required: true,
     },
-
-    Studentdetails:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"studentdocs"
+    Studentdetails: {
+        type: Schema.Types.ObjectId,
+        ref: "studentdocs",
+        default: null
     },
-
+    Avatar: {
+        type: String,
+        default: ""
+    },
+    Course: {
+        type: Schema.Types.ObjectId,
+        ref: "course",
+        default: null
+    },
+    Payment: {
+        type: Schema.Types.ObjectId,
+        ref: "payment",
+        default: null
+    },
+    Isverified: {
+        type: Boolean,
+        default: false
+    },
+    Isapproved: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+    Refreshtoken: {
+        type: String
+    },
     forgetPasswordToken: String,
-
     forgetPasswordExpiry: Date,
-    
-},
 
-{
-    timestamps:true,
-}
-)
-
-studentSchema.pre("save", async function(next) {
-    if(this.isModified('Firstname') || this.isNew){
-        this.Firstname = this.Firstname.charAt(0).toUpperCase() + this.Firstname.slice(1).toLowerCase();
-    }
-
-    if(this.isModified('Lastname') || this.isNew){
-        this.Lastname = this.Lastname.charAt(0).toUpperCase() + this.Lastname.slice(1).toLowerCase();
-    }
-
-    next()
-})
+}, { timestamps: true })
 
 studentSchema.pre("save", async function (next) {
-    if(!this.isModified("Password")) return next(); 
-      this.Password = await bcrypt.hash(this.Password, 10)
+    if (!this.isModified("Password")) return next();
+
+    this.Password = await bcrypt.hash(this.Password, 10)
     next()
 })
 
-studentSchema.methods.isPasswordCorrect = async function (Password){
-    return await bcrypt.compare(Password, this.Password)
+studentSchema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password, this.Password)
 }
 
-studentSchema.methods.generateAccessToken = function(){
-    return jwt.sign({
-        _id:this._id,
-        Email:this.Email,
-    },
-    process.env.ACCESS_TOKEN_SECRET,{
-        expiresIn:process.env.ACCESS_TOKEN_EXPIRY
-    })
+studentSchema.methods.generateAccessToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id,
+            Email: this.Email,
+            Firstname: this.Firstname,
+            Lastname: this.Lastname,
+            type: "student"
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
 }
 
-studentSchema.methods.generateRefreshToken = function(){
-    return jwt.sign({
-        _id:this._id,
-        Email:this.Email,
-    },
-    process.env.REFRESH_TOKEN_SECRET,{
-        expiresIn:process.env.REFRESH_TOKEN_EXPIRY
-    })
+studentSchema.methods.generateRefreshToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id,
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
 }
 
-studentSchema.methods.generateResetToken =async function(){
+studentSchema.methods.generateResetToken = async function () {
+    const resetToken = crypto.randomBytes(20).toString('hex');
 
-    const reset=crypto.randomBytes(20).toString('hex') ;
+    this.forgetPasswordToken = resetToken;
+    this.forgetPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
 
-    this.forgetPasswordToken=crypto.createHash('sha256').update(reset).digest('hex') ;
+    return resetToken;
+};
 
-    this.forgetPasswordExpiry=Date.now() + 15 * 60 * 1000 ; 
+export const student = mongoose.model("students", studentSchema)
 
-    await this.save() ;
-
-}
-
-
-
-
-
-
-const studentDetailsSchema = new mongoose.Schema({
-    Phone:{
-        type:Number,
+const studentdocsSchema = new Schema({
+    Phone: {
+        type: String,
         required: true,
-        trim:true,
-        unique:true,
+        unique: true
     },
-
-    Address:{
-        type:String,
-        required:true,
+    Address: {
+        type: String,
+        required: true,
     },
-
-    Highesteducation:{
-        type:String,
-        required:true,
+    Highesteducation: {
+        type: String,
+        required: true
     },
-
-    SecondarySchool:{
-        type:String,
-        required:true,
+    SecondarySchool: {
+        type: String,
+        required: true,
     },
-
-    HigherSchool:{
-        type:String,
-        required:true,
+    SecondaryMarks: {
+        type: String,
+        required: true,
     },
-
-    SecondaryMarks:{
-        type:Number,
-        required:true,
+    HigherSchool: {
+        type: String,
+        required: true,
     },
-
-    HigherMarks:{
-        type:Number,
-        required:true,
+    HigherMarks: {
+        type: String,
+        required: true,
     },
-
-    Aadhaar:{
-        type:String,
-        required:true,
+    Aadhaar: {
+        type: String,
+        required: true,
     },
-
-    Secondary:{
-        type:String,
-        required:true,
+    Secondary: {
+        type: String,
+        required: true,
     },
-
-    Higher:{
-        type:String,
-        required:true,
-    },
-
-}, {
-    timestamps:true,
+    Higher: {
+        type: String,
+        required: true,
+    }
 })
 
-
-
-const student = mongoose.model("students", studentSchema)
-
-const studentdocs = mongoose.model("studentdocs", studentDetailsSchema)
-
-export {student, studentdocs}
+export const studentdocs = mongoose.model("studentdocs", studentdocsSchema)

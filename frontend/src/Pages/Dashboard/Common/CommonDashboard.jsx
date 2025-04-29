@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useParams, useNavigate, Outlet } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
 import { FaSun, FaMoon, FaHome, FaBook, FaCalendarAlt, FaUserGraduate, FaUserCircle, FaBell } from 'react-icons/fa';
 import { RiMenu4Fill, RiCloseLine } from 'react-icons/ri';
 import logo from '../../Images/logo.svg';
+import NotificationDropdown from '../Components/NotificationDropdown';
 
 function CommonDashboard({ userType }) {
   const { ID } = useParams();
@@ -14,6 +15,8 @@ function CommonDashboard({ userType }) {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { logout } = useAuth();
+  const sidebarRef = useRef(null);
+  const buttonRef = useRef(null);
 
   const handleLogout = () => {
     try {
@@ -22,6 +25,22 @@ function CommonDashboard({ userType }) {
       setError('Failed to logout');
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        sidebarRef.current && 
+        !sidebarRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -52,10 +71,18 @@ function CommonDashboard({ userType }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#042439] flex">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#031c2e]">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#0a3553] transform transition-transform duration-200 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 border-r border-gray-200 dark:border-gray-700`}>
+      <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#0a3553] shadow-lg transform md:translate-x-0 transition-transform duration-300 ease-in-out`}>
         <div className="h-full flex flex-col">
+          {/* Close button for mobile */}
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#042439] transition-colors text-gray-500 dark:text-gray-400"
+          >
+            <RiCloseLine className="h-6 w-6" />
+          </button>
+
           {/* Logo */}
           <div className="p-6 flex items-center space-x-4 border-b border-gray-200 dark:border-gray-700">
             <img src={logo} alt="Edify Logo" className="h-8 w-auto" />
@@ -181,14 +208,15 @@ function CommonDashboard({ userType }) {
             </button>
           </div>
         </div>
-      </div>
+      </aside>
 
       {/* Main Content */}
-      <div className="flex-1 md:ml-64">
-        {/* Top Navigation */}
-        <header className="fixed top-0 right-0 left-0 md:left-64 bg-white dark:bg-[#0a3553] border-b border-gray-200 dark:border-gray-700 z-40">
-          <div className="h-16 px-4 flex items-center justify-between">
+      <div className="md:ml-64 min-h-screen">
+        {/* Header */}
+        <header className="fixed top-0 right-0 left-0 md:left-64 bg-white dark:bg-[#0a3553] shadow-sm z-40">
+          <div className="flex items-center justify-between px-4 h-16">
             <button
+              ref={buttonRef}
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="md:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439] transition-colors"
             >
@@ -199,17 +227,12 @@ function CommonDashboard({ userType }) {
               )}
             </button>
 
-            <div className="flex items-center space-x-4">
-              <button
-                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439] transition-colors relative"
-              >
-                <FaBell className="h-5 w-5" />
-                <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-              </button>
+            <div className="flex items-center space-x-4 ml-auto">
+              <NotificationDropdown />
               {userData && (
                 <div className="flex items-center space-x-3">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Welcome, {userData.Firstname}
+                    {userType} Dashboard
                   </span>
                   <FaUserCircle className="h-8 w-8 text-[#4E84C1] dark:text-white" />
                 </div>

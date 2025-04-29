@@ -124,6 +124,10 @@ function search() {
         setShowSchedule(true);
     };
 
+    const isEnrolled = (course) => {
+        return course.enrolledStudent?.some(studentId => studentId === auth.user?._id);
+    };
+
     return (
         <>
             <Header/>
@@ -161,9 +165,15 @@ function search() {
                                                 {Data.enrolledStudent.length}/20 Students
                                             </span>
                                             <button 
-                                                onClick={handleEnroll}
-                                                className='bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors min-w-[140px]'>
-                                                Enroll Now
+                                                onClick={() => !isEnrolled(Data) && handleEnroll()}
+                                                className={`${
+                                                    isEnrolled(Data) 
+                                                    ? 'bg-green-600 cursor-not-allowed' 
+                                                    : 'bg-blue-600 hover:bg-blue-700'
+                                                } text-white px-6 py-2 rounded-md transition-colors min-w-[140px]`}
+                                                disabled={isEnrolled(Data)}
+                                            >
+                                                {isEnrolled(Data) ? 'Enrolled' : 'Enroll Now'}
                                             </button>
                                         </div>
                                     </div>
@@ -201,9 +211,15 @@ function search() {
                                                 {Data.enrolledStudent.length}/20 Students
                                             </span>
                                             <button 
-                                                onClick={handleEnroll}
-                                                className='bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors min-w-[140px]'>
-                                                Enroll Now
+                                                onClick={() => !isEnrolled(Data) && handleEnroll()}
+                                                className={`${
+                                                    isEnrolled(Data) 
+                                                    ? 'bg-green-600 cursor-not-allowed' 
+                                                    : 'bg-blue-600 hover:bg-blue-700'
+                                                } text-white px-6 py-2 rounded-md transition-colors min-w-[140px]`}
+                                                disabled={isEnrolled(Data)}
+                                            >
+                                                {isEnrolled(Data) ? 'Enrolled' : 'Enroll Now'}
                                             </button>
                                         </div>
                                     </div>

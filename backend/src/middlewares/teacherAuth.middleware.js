@@ -6,13 +6,23 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const authTeacher = asyncHandler(async(req, _, next) => {
     try {
         const accToken = req.cookies?.Accesstoken;
-
         if (!accToken) {
-            throw new ApiError(401, "Unauthorized request");
+            throw new ApiError(401, "Unauthorized: Please log in to access this resource");
         }
 
-        const decodedToken = jwt.verify(accToken, process.env.ACCESS_TOKEN_SECRET);
-        
+        let decodedToken;
+        try {
+            decodedToken = jwt.verify(accToken, process.env.ACCESS_TOKEN_SECRET);
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                throw new ApiError(401, "Access token has expired");
+            }
+            if (error.name === 'JsonWebTokenError') {
+                throw new ApiError(401, "Invalid token");
+            }
+            throw error;
+        }
+
         if (!decodedToken?._id) {
             throw new ApiError(401, "Invalid access token format");
         }
@@ -21,20 +31,13 @@ const authTeacher = asyncHandler(async(req, _, next) => {
             .select("-Password -Refreshtoken");
 
         if (!teacher) {
-            throw new ApiError(401, "Teacher not found");
+            throw new ApiError(401, "Teacher account not found");
         }
 
-        // Add teacher to request object
         req.teacher = teacher;
         next();
     } catch (error) {
-        if (error.name === 'JsonWebTokenError') {
-            throw new ApiError(401, "Invalid token");
-        }
-        if (error.name === 'TokenExpiredError') {
-            throw new ApiError(401, "Token has expired");
-        }
-        throw error;
+        next(error);
     }
 })
 

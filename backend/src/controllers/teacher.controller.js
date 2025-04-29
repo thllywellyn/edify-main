@@ -7,8 +7,9 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { student } from "../models/student.model.js";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
-const verifyEmail = async (Email, Firstname, createdTeacherId) => {
+const sendVerificationEmail = async (email, teacherId) => {
     try {
         const emailSender = nodemailer.createTransport({
             host: process.env.SMTP_EMAIL_HOST,
@@ -21,26 +22,19 @@ const verifyEmail = async (Email, Firstname, createdTeacherId) => {
         });
         const mailOptions = {
             from: "edify-noreply@lsanalab.xyz",
-            to: Email,
+            to: email,
             subject: "Verify your E-mail",
             html: `<div style="text-align: center;">
-            <p style="margin: 20px;"> Hi ${Firstname}, Please click the button below to verify your E-mail. </p>
+            <p style="margin: 20px;"> Hi, Please click the button below to verify your E-mail. </p>
             <img src="https://img.freepik.com/free-vector/illustration-e-mail-protection-concept-e-mail-envelope-with-file-document-attach-file-system-security-approved_1150-41788.jpg?size=626&ext=jpg&uid=R140292450&ga=GA1.1.553867909.1706200225&semt=ais" alt="Verification Image" style="width: 100%; height: auto;">
             <br>
-            <a href="http://localhost:8000/api/teacher/verify?id=${createdTeacherId}">
+            <a href="${process.env.FRONTEND_URL}/verify-email?token=${teacherId}&type=teacher">
                 <button style="background-color: black; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer;">Verify Email</button>
             </a>
         </div>`
         };
-        emailSender.sendMail(mailOptions, function(error) {
-            if (error) {
-                throw new ApiError(400, "Sending email verification failed");
-            } else {
-                console.log("Verification mail sent successfully");
-            }
-        });
+        await emailSender.sendMail(mailOptions);
     } catch (error) {
-        console.log("kadyan",error);
         throw new ApiError(400, "Failed to send email verification");
     }
 };
@@ -60,7 +54,7 @@ const generateAccessAndRefreshTokens = async (teacherId) => {
     }
 };
 
-const signup = asyncHandler(async (req, res) => {
+const registerTeacher = asyncHandler(async (req, res) => {
     const { Firstname, Lastname, Email, Password } = req.body;
 
     if ([Firstname, Lastname, Email, Password].some((field) => field?.trim() === "")) {
@@ -82,8 +76,14 @@ const signup = asyncHandler(async (req, res) => {
         Firstname,
         Lastname,
         Password,
-        Teacherdetails:null,
+        Teacherdetails: null,
     });
+
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    newTeacher.verificationToken = verificationToken;
+    
+    await sendVerificationEmail(Email, newTeacher._id);
+    await newTeacher.save();
 
     const createdTeacher = await Teacher.findById(newTeacher._id).select("-Password");
 
@@ -91,34 +91,36 @@ const signup = asyncHandler(async (req, res) => {
         throw new ApiError(501, "Teacher registration failed");
     }
 
-    await verifyEmail(Email, Firstname, newTeacher._id);
-
     return res.status(200).json(
         new ApiResponse(200, createdTeacher, "Signup successful")
     );
 });
 
-const mailVerified = asyncHandler(async (req, res) => {
-    try {
-        const id = req.query.id;
+const verifyEmail = asyncHandler(async (req, res) => {
+    const { token } = req.body;
     
-        const updatedInfo = await Teacher.updateOne({ _id: id }, { $set: { Isverified: true } });
+    const teacher = await Teacher.findOne({ verificationToken: token });
     
-        if (updatedInfo.nModified === 0) {
-            throw new ApiError(404, "Teacher not found or already verified");
-        }
-    
-        return res.send(`
-        <div style="text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <img src="https://cdn-icons-png.flaticon.com/128/4436/4436481.png" alt="Verify Email Icon" style="width: 100px; height: 100px;">
-            <h1 style="font-size: 36px; font-weight: bold; padding: 20px;">Email Verified</h1>
-            <h4>Your email address was successfully verified.</h4>
-            <button style="padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; margin: 20px;" onclick="window.location.href = 'http://localhost:5173';">Go Back Home</button>
-        </div>`
-        );
-    } catch (error) {
-        throw new ApiError(509, "something went wrong while verifying User")
+    if (!teacher) {
+        throw new ApiError(400, "Invalid verification token");
     }
+    
+    teacher.Isverified = true;
+    teacher.verificationToken = undefined;
+    await teacher.save();
+    
+    return res.send(`
+    <div style="text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: Arial, sans-serif;">
+        <img src="https://cdn-icons-png.flaticon.com/128/4436/4436481.png" alt="Verify Email Icon" style="width: 100px; height: 100px;">
+        <h1 style="font-size: 36px; font-weight: bold; padding: 20px;">Email Verified Successfully!</h1>
+        <h4 style="margin-bottom: 20px;">Your email address was successfully verified.</h4>
+        <p style="margin-bottom: 20px; color: #666;">Please complete your profile by uploading the required documents.</p>
+        <button onclick="window.location.href='${process.env.FRONTEND_URL}/TeacherDocument/${teacher._id}'" 
+                style="background-color: #4E84C1; color: white; padding: 12px 24px; border: none; border-radius: 6px; 
+                       font-size: 16px; cursor: pointer; transition: background-color 0.3s;">
+            Continue to Document Upload
+        </button>
+    </div>`);
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -400,4 +402,15 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-export { signup, mailVerified, login, logout, addTeacherDetails, getTeacher, teacherdocuments, ForgetPassword, ResetPassword, refreshAccessToken };
+export {
+    registerTeacher,
+    verifyEmail,
+    login,
+    logout,
+    getTeacher,
+    teacherdocuments,
+    ForgetPassword,
+    ResetPassword,
+    refreshAccessToken,
+    addTeacherDetails
+};

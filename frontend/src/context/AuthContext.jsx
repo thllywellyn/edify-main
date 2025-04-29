@@ -10,29 +10,39 @@ export function AuthProvider({ children }) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        try {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                const userSession = JSON.parse(storedUser);
-                const sessionAge = new Date().getTime() - userSession.timestamp;
-                if (sessionAge > 24 * 60 * 60 * 1000) {
-                    localStorage.removeItem('user');
-                    setUser(null);
-                } else {
-                    setUser(userSession.data);
-                    // Auto-redirect if on login pages
-                    const path = window.location.pathname;
-                    if (path === '/login' || path === '/adminLogin') {
-                        handleRedirect(userSession.data);
+        const initAuth = async () => {
+            try {
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    const userSession = JSON.parse(storedUser);
+                    const sessionAge = new Date().getTime() - userSession.timestamp;
+                    
+                    if (sessionAge > 24 * 60 * 60 * 1000) {
+                        await logout();
+                    } else {
+                        const isValid = await refreshToken();
+                        if (isValid) {
+                            setUser(userSession.data);
+                            // Only redirect if on login pages
+                            const path = window.location.pathname;
+                            if (path === '/login' || path === '/adminLogin') {
+                                handleRedirect(userSession.data);
+                            }
+                        } else {
+                            await logout();
+                        }
                     }
                 }
+            } catch (err) {
+                console.error('Auth initialization error:', err);
+                setError(err.message);
+                await logout();
+            } finally {
+                setLoading(false);
             }
-        } catch (err) {
-            console.error('Auth initialization error:', err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+        };
+        
+        initAuth();
     }, []);
 
     const handleRedirect = (userData) => {
@@ -44,49 +54,52 @@ export function AuthProvider({ children }) {
             return;
         }
 
-        // Student/Teacher redirection based on status
-        switch (userData.status) {
-            case "pending":
-                if (userData.Teacherdetails || userData.Studentdetails) {
-                    navigate('/pending');
-                } else {
-                    navigate(`/${userData.type}Document/${userData._id}`);
-                }
-                break;
-            case "approved":
-                const dashboardPath = userData.type === 'student' ? 'search' : 'home';
-                navigate(`/dashboard/${userData.type}/${userData._id}/${dashboardPath}`);
-                break;
-            case "reupload":
-                navigate(`/rejected/${userData.type}/${userData._id}`);
-                break;
-            default:
-                navigate('/');
+        // For students and teachers, check document verification first
+        if (userData.needsVerification || (!userData.Studentdetails && !userData.Teacherdetails)) {
+            const docPath = userData.type === 'student' ? 'StudentDocument' : 'TeacherDocument';
+            navigate(`/${docPath}/${userData._id}`);
+            return;
         }
+
+        // Check approval status
+        if (userData.Isapproved === 'pending') {
+            navigate('/pending');
+            return;
+        }
+
+        if (userData.Isapproved === 'rejected') {
+            navigate(`/rejected/${userData._id}/${userData.type}`);
+            return;
+        }
+
+        // Navigate to dashboard if approved
+        const dashboardPath = userData.type === 'student' ? 'search' : 'home';
+        navigate(`/dashboard/${userData.type}/${userData._id}/${dashboardPath}`);
     };
 
     const login = async (userData, userType) => {
         try {
             setLoading(true);
             setError(null);
+            
             const userWithType = { ...userData, type: userType };
             setUser(userWithType);
             
-            // Store in localStorage with timestamp
             const userSession = {
                 data: userWithType,
                 timestamp: new Date().getTime()
             };
             localStorage.setItem('user', JSON.stringify(userSession));
-
-            // Handle redirection
-            handleRedirect(userWithType);
+            
+            // Let the redirect happen after state updates
+            setTimeout(() => handleRedirect(userWithType), 0);
             
         } catch (err) {
             console.error('Login error:', err);
             setError(err.message);
             setUser(null);
             localStorage.removeItem('user');
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -94,25 +107,27 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         try {
+            setLoading(true);
             const userType = user?.type || 'student';
             await fetch(`/api/${userType}/logout`, {
                 method: 'POST',
                 credentials: 'include'
             });
-            setUser(null);
-            localStorage.removeItem('user');
-            navigate(userType === 'admin' ? '/adminLogin' : '/login');
         } catch (err) {
             console.error('Logout error:', err);
+        } finally {
+            setUser(null);
+            localStorage.removeItem('user');
+            setLoading(false);
+            navigate(user?.type === 'admin' ? '/adminLogin' : '/login');
         }
     };
 
     const refreshToken = async () => {
         try {
-            if (!user) return false;
+            if (!user?.type) return false;
             
-            const userType = user?.type || 'student';
-            const response = await fetch(`/api/${userType}/refresh-token`, {
+            const response = await fetch(`/api/${user.type}/refresh-token`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -121,46 +136,59 @@ export function AuthProvider({ children }) {
             });
 
             if (!response.ok) {
-                await logout();
+                const data = await response.json();
+                if (response.status === 401) {
+                    await logout();
+                }
                 return false;
             }
 
-            const data = await response.json();
-            if (data.success) {
-                return true;
-            }
-            await logout();
-            return false;
+            return true;
         } catch (error) {
             console.error('Token refresh error:', error);
-            await logout();
             return false;
         }
     };
 
+    useEffect(() => {
+        if (user) {
+            const refreshInterval = setInterval(() => {
+                refreshToken();
+            }, 14 * 60 * 1000); // Refresh every 14 minutes
+            
+            return () => clearInterval(refreshInterval);
+        }
+    }, [user]);
+
     const fetchWithToken = async (url, options = {}) => {
         try {
-            options.credentials = 'include';
-            options.headers = {
-                ...options.headers,
-                'Content-Type': 'application/json'
-            };
-
-            let response = await fetch(url, options);
+            const response = await fetch(url, {
+                ...options,
+                credentials: 'include',
+                headers: {
+                    ...options.headers,
+                    'Content-Type': options.headers?.['Content-Type'] || 'application/json'
+                }
+            });
 
             if (response.status === 401) {
-                const isRefreshed = await refreshToken();
-                
-                if (isRefreshed) {
-                    response = await fetch(url, options);
-                } else {
-                    throw new Error('Authentication failed');
+                const refreshed = await refreshToken();
+                if (refreshed) {
+                    return fetch(url, {
+                        ...options,
+                        credentials: 'include',
+                        headers: {
+                            ...options.headers,
+                            'Content-Type': options.headers?.['Content-Type'] || 'application/json'
+                        }
+                    });
                 }
             }
-
             return response;
         } catch (error) {
-            console.error('Fetch error:', error);
+            if (error.message.includes('token') || error.message.toLowerCase().includes('unauthorized')) {
+                await refreshToken();
+            }
             throw error;
         }
     };

@@ -7,6 +7,7 @@ function VideoUpload({ onClose, courseId }) {
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [isPublished, setIsPublished] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -21,6 +22,7 @@ function VideoUpload({ onClose, courseId }) {
     formData.append('video', file);
     formData.append('title', title);
     formData.append('description', description);
+    formData.append('isPublished', isPublished);
 
     try {
       const response = await fetch(`/api/course/${courseId}/upload-video`, {
@@ -95,11 +97,18 @@ function VideoUpload({ onClose, courseId }) {
           </div>
         </div>
 
-        {file && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Selected file: {file.name}
-          </p>
-        )}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="isPublished"
+            checked={isPublished}
+            onChange={(e) => setIsPublished(e.target.checked)}
+            className="h-4 w-4 text-[#4E84C1] focus:ring-[#4E84C1] border-gray-300 rounded"
+          />
+          <label htmlFor="isPublished" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+            Make video available to students immediately
+          </label>
+        </div>
 
         <div className="flex justify-end">
           <button

@@ -1,161 +1,136 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import {instance}  from "../app.js"
-import crypto from "crypto"
-import {payment} from "../models/payment.model.js"
+import { student } from "../models/student.model.js";
 import { Teacher } from "../models/teacher.model.js";
+import { course } from "../models/course.model.js";
+import { Sendmail } from "../utils/Nodemailer.js";
 
-
-const coursePayment = asyncHandler(async(req,res)=>{
-    const {fees, } = req.body
-
-    if(!fees){
-      throw new ApiError(400,"fees is required")
-    }
-
-    const options = {
-        amount: fees,  // amount in the smallest currency unit
-        currency: "INR",
-        receipt: "order_rcptid_11"
-      };
-      const order = await instance.orders.create(options)
-
-      return res
-      .status(200)
-      .json( new ApiResponse(200, order,"order fetched"))
-})
-
-
-const getkey = asyncHandler(async(req,res)=>{
-  return res
-  .status(200)
-  .json(new ApiResponse(200,{key:process.env.KEY_ID}, "razor key fetched"))
-})
-
-
-const coursePaymentConfirmation = asyncHandler(async(req,res)=>{
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-    req.body;
+const coursePayment = asyncHandler(async (req, res) => {
+  const { courseID } = req.params;
+  // For demo purposes, we'll just create a fake order ID
+  const orderId = "demo_order_" + Date.now();
   
-  const studentID = req.Student._id
-  const courseID = req.params.courseID
-  console.log(courseID)
-
-  const body = razorpay_order_id + "|" + razorpay_payment_id;
-
-  const expectedSignature = crypto
-    .createHmac("sha256", process.env.KEY_SECRET)
-    .update(body.toString())
-    .digest("hex");
-
-  const isAuthentic = expectedSignature === razorpay_signature;
-
-  if (isAuthentic) {
-
-    const orderDetails = await payment.create({
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      courseID, 
-      studentID,
-    });
-
-    return res
+  return res
     .status(200)
-    .json(new ApiResponse(200,{orderDetails}, "payment confirmed" ))
-  } else {
-    throw new ApiError(400, "payment failed")
-  }
-})
+    .json(new ApiResponse(200, { id: orderId }, "Order created successfully"));
+});
 
+const getkey = asyncHandler(async (req, res) => {
+  // For demo purposes, return a dummy key
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { key: "dummy_key" }, "Key fetched"));
+});
 
-const teacherAmount = asyncHandler(async(req,res)=>{
-  const teacher = req.teacher
+const coursePaymentConfirmation = asyncHandler(async (req, res) => {
+  const { courseID } = req.params;
+  const loggedStudent = req.Student;
 
-  const newEnrolledStudentCount = await Teacher.aggregate([
+  // Skip payment verification for demo
+  // Update course enrollment
+  const Course = await course.findByIdAndUpdate(
+    courseID,
     {
-      $match: { _id: teacher._id }
+      $addToSet: { enrolledStudent: loggedStudent._id }
     },
-    {
-      $unwind: "$enrolledStudent"
-    },
-    {
-      $match: { "enrolledStudent.isNewEnrolled": true }
-    },
-    {
-      $group: {
-        _id: null,
-        count: { $sum: 1 }
-      }
-    }
-  ]);
-
-  const count = newEnrolledStudentCount.length > 0 ? newEnrolledStudentCount[0].count : 0;
-
-
-  await Teacher.findByIdAndUpdate(
-    teacher._id,
-    { $inc: { Balance: count * 500 } },
-   
+    { new: true }
   );
 
-  const newTeacher = await Teacher.findOneAndUpdate(
-    { _id: teacher._id, "enrolledStudent.isNewEnrolled": true },
-    { $set: { "enrolledStudent.$[elem].isNewEnrolled": false } },
-    { 
-        new: true,
-        arrayFilters: [{ "elem.isNewEnrolled": true }],
-    }
-  );
-
-  if(!newTeacher){
-    const newTeacher = await Teacher.findById(
-      teacher._id
-    )
-
-    return res
-    .status(200)
-    .json(new ApiResponse(200, {newTeacher}, "balance"))
+  if (!Course) {
+    throw new ApiError(404, "Course not found");
   }
 
+  // Send confirmation email
+  await Sendmail(loggedStudent.Email, `Payment Confirmation for Course Purchase`, 
+    `<html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h1 style="color: #4CAF50; text-align: center;">Payment Successful!</h1>
+        <p style="font-size: 16px; text-align: center;">Dear ${loggedStudent.Firstname},</p>
+        <p style="font-size: 16px; text-align: center;">We are pleased to inform you that your payment for the course has been successfully processed.</p>
+         <p style="font-size: 16px;">You can start accessing the course immediately by logging into your account.</p>
+        <p style="font-size: 16px;">Best regards,</p>
+        <p style="font-size: 16px;"><strong>The Edify Team</strong></p>
+        <p style="font-size: 14px;">&copy; 2024 Edify. All rights reserved.</p>
+        </body>
+    </html>`
+  );
 
-  return res
-  .status(200)
-  .json(new ApiResponse(200, {newTeacher}, "balance"))
-  
-})
-
-
-const withdrawAmount = asyncHandler(async(req,res)=>{
-
-  const teacherId = req.teacher._id
-  const amount = req.body.amount
-
-  console.log(amount);
-
-  const teacher = await Teacher.findById(teacherId);
+  // Update teacher's balance
+  const teacher = await Teacher.findByIdAndUpdate(
+    Course.enrolledteacher,
+    {
+      $inc: { Balance: Course.price }
+    },
+    { new: true }
+  );
 
   if (!teacher) {
-    return res.status(404).json({ message: "Teacher not found" });
+    throw new ApiError(404, "Teacher not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { Course }, "Payment successful"));
+});
+
+const teacherAmount = asyncHandler(async (req, res) => {
+  const { teacherID } = req.params;
+
+  const teacher = await Teacher.findById(teacherID);
+  if (!teacher) {
+    throw new ApiError(404, "Teacher not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { balance: teacher.Balance }, "Balance fetched successfully"));
+});
+
+const withdrawAmount = asyncHandler(async (req, res) => {
+  const { teacherID } = req.params;
+  const { amount } = req.body;
+
+  if (!amount || amount <= 0) {
+    throw new ApiError(400, "Invalid withdrawal amount");
+  }
+
+  const teacher = await Teacher.findById(teacherID);
+  if (!teacher) {
+    throw new ApiError(404, "Teacher not found");
   }
 
   if (teacher.Balance < amount) {
-    return res.status(400).json({ message: "Insufficient balance" });
+    throw new ApiError(400, "Insufficient balance");
   }
 
-  teacher.Balance -= amount;
-  teacher.WithdrawalHistory.push({ amount });
-  await teacher.save();
-
-  const newTeacher = await Teacher.findById(teacherId)
+  // Update teacher's balance and add to withdrawal history
+  const updatedTeacher = await Teacher.findByIdAndUpdate(
+    teacherID,
+    {
+      $inc: { Balance: -amount },
+      $push: {
+        WithdrawalHistory: {
+          amount,
+          date: new Date()
+        }
+      }
+    },
+    { new: true }
+  );
 
   return res
-  .status(200)
-  .json(new ApiResponse(200, {newTeacher}, "balance"))
-  
-})
+    .status(200)
+    .json(new ApiResponse(200, { 
+      newBalance: updatedTeacher.Balance,
+      withdrawal: updatedTeacher.WithdrawalHistory[updatedTeacher.WithdrawalHistory.length - 1]
+    }, "Withdrawal successful"));
+});
 
-
-
-export {coursePayment, getkey, coursePaymentConfirmation, teacherAmount, withdrawAmount}
+export {
+  coursePayment,
+  getkey,
+  coursePaymentConfirmation,
+  teacherAmount,
+  withdrawAmount
+};

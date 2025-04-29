@@ -64,8 +64,62 @@ export default function Login() {
         throw new Error(responseData.message || 'Login failed');
       }
 
-      // Let AuthContext handle the navigation based on user status
-      await auth.login(responseData.data.user, userType);
+      const userData = responseData.data;
+      
+      // Check if document verification is needed
+      if (userData.needsVerification || (!userData.Studentdetails && !userData.Teacherdetails)) {
+        const docPath = userType === 'student' ? 'StudentDocument' : 'TeacherDocument';
+        await auth.login(userData, userType);
+        navigate(`/${docPath}/${userData._id}`);
+        return;
+      }
+
+      // Let AuthContext handle the rest of the navigation based on user status
+      await auth.login(userData, userType);
+      
+    } catch (error) {
+      setErr(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTeacherSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const res = await fetch(`/api/teacher/login`, {
+        method: 'POST',
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          Email: email, 
+          Password: password 
+        }),
+      });
+
+      const responseData = await res.json();
+
+      if (!res.ok) {
+        throw new Error(responseData.message || 'Login failed');
+      }
+
+      if (!responseData.data.Isverified) {
+        // Redirect to email verification page if email is not verified
+        navigate('/verify-email', { 
+          state: { 
+            email: email,
+            userType: 'teacher'
+          } 
+        });
+        return;
+      }
+
+      // Let AuthContext handle the rest of the navigation based on user status
+      await auth.login(responseData.data, 'teacher');
       
     } catch (error) {
       setErr(error.message);

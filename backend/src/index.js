@@ -5,14 +5,17 @@ dotenv.config({
     path: './.env'
 })
 
-console.log(`${process.env.DB_NAME}`);
-
+console.log(`Database used currently : ${process.env.DB_NAME}`);
 
 db()
 .then(() => {
-    app.listen(process.env.PORT || 8000, () => {
+    const server = app.listen(process.env.PORT || 8000, () => {
         console.log(`⚙️ Server is running at port : ${process.env.PORT}`);
-    })
+    });
+
+    // Configure timeouts
+    server.timeout = 120000; // 2 minutes
+    server.keepAliveTimeout = 65000; // slightly higher than 60 seconds
 })
 .catch((err) => {
     console.log(" mongodb connection failed !!! ", err);

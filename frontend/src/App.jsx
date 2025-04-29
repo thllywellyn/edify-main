@@ -14,6 +14,8 @@ import VarifyEmail from './Pages/Components/VarifyEmail/VarifyEmail'
 import Rejected from './Pages/Response/Rejected'
 import Pending from './Pages/Response/Pending'
 import Admin from './Pages/Components/Admin/Admin'
+import AdminApprovals from './Pages/Components/Admin/AdminApprovals'
+import AdminCourses from './Pages/Components/Admin/AdminCourses'
 import VarifyDoc from './Pages/Components/Admin/VarifyDoc'
 import StudentDashboardLayout from './Pages/Dashboard/Common/StudentDashboardLayout'
 import TeacherDashboardLayout from './Pages/Dashboard/Common/TeacherDashboardLayout'
@@ -28,7 +30,6 @@ import ErrorPage from './Pages/ErrorPage/ErrorPage'
 import Forgetpassword from './Pages/ForgetPassword/Forgetpassword'
 import ResetPassword from './Pages/ForgetPassword/ResetPassword'
 import ResetTeacher from './Pages/ForgetPassword/ResetTeacher'
-import Course from './Pages/Components/Admin/Course'
 import ProtectedRoute from './Pages/Components/ProtectedRoute'
 
 function App() {
@@ -39,7 +40,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/Signup" element={<Signup />} />
         <Route path="/Search/:subject" element={<SearchData />} />
-        <Route path="/StudentDocument/:Data" element={<StudentDocument />} />
+        <Route path="/StudentDocument/:Data" element={<ProtectedRoute><StudentDocument /></ProtectedRoute>} />
         <Route path="/TeacherDocument/:Data" element={<TeacherDocument />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/contact" element={<Contact />} />
@@ -50,8 +51,10 @@ function App() {
         <Route path="/pending" element={<Pending />} />
 
         {/* Admin Routes */}
-        <Route path="/admin/:data" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-        <Route path="/admin/course/:data" element={<ProtectedRoute><Course /></ProtectedRoute>} />
+        <Route path="/admin/:data" element={<ProtectedRoute><Admin /></ProtectedRoute>}>
+          <Route index element={<AdminApprovals />} />
+          <Route path="courses" element={<AdminCourses />} />
+        </Route>
         <Route path="/VarifyDoc/:type/:adminID/:ID" element={<ProtectedRoute><VarifyDoc /></ProtectedRoute>} />
 
         {/* Student Dashboard */}

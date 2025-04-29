@@ -36,21 +36,23 @@ adminSchema.methods.isPasswordCorrect = async function (password){
 
 adminSchema.methods.generateAccessToken = function(){
     return jwt.sign({
-        _id:this._id,
-        Email:this.Email,
+        _id: this._id,
+        username: this.username,
+        type: 'admin'
     },
     process.env.ACCESS_TOKEN_SECRET,{
-        expiresIn:process.env.ACCESS_TOKEN_EXPIRY
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY
     })
 }
 
 adminSchema.methods.generateRefreshToken = function(){
     return jwt.sign({
-        _id:this._id,
-        Email:this.Email,
+        _id: this._id,
+        username: this.username,
+        type: 'admin'
     },
     process.env.REFRESH_TOKEN_SECRET,{
-        expiresIn:process.env.REFRESH_TOKEN_EXPIRY
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY
     })
 }
 

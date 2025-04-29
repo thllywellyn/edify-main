@@ -37,11 +37,19 @@ const teacherSchema = new mongoose.Schema({
 
     forgetPasswordExpiry: Date,
 
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationToken: String,
+    emailVerificationExpiry: Date,
 
     Isverified: {
         type:Boolean,
         default:false,
     },
+
+    verificationToken: String,
 
     Isapproved:{
         type: String,

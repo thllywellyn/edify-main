@@ -45,7 +45,7 @@ const verifyEmail = async (Email, Firstname, createdStudent_id) => {
                 <p style="margin: 20px;"> Hi ${Firstname}, Please click the button below to verify your E-mail. </p>
                 <img src="https://img.freepik.com/free-vector/illustration-e-mail-protection-concept-e-mail-envelope-with-file-document-attach-file-system-security-approved_1150-41788.jpg?size=626&ext=jpg&uid=R140292450&ga=GA1.1.553867909.1706200225&semt=ais" alt="Verification Image" style="width: 100%; height: auto;">
                 <br>
-                <a href="http://localhost:8000/api/student/verify?id=${createdStudent_id}">
+                <a href="${process.env.FRONTEND_URL}/api/student/verify?id=${createdStudent_id}">
                     <button style="background-color: black; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer;">Verify Email</button>
                 </a>
             </div>`
@@ -144,29 +144,32 @@ const signup = asyncHandler(async (req, res) =>{
 })
 
 const mailVerified = asyncHandler(async(req,res)=>{
-        const id = req.query.id;
+    const id = req.query.id;
 
-        const updatedInfo = await student.updateOne({ _id: id }, { $set: { Isverified: true } });
+    const updatedInfo = await student.updateOne({ _id: id }, { $set: { Isverified: true } });
 
-        if (updatedInfo.nModified === 0) {
-            throw new ApiError(404, "Student not found or already verified");
-        }
-        return res.send(`
-        <div style="text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <img src="https://cdn-icons-png.flaticon.com/128/4436/4436481.png" alt="Verify Email Icon" style="width: 100px; height: 100px;">
-            <h1 style="font-size: 36px; font-weight: bold; padding: 20px;">Email Verified</h1>
-            <h4>Your email address was successfully verified.</h4>
-            <button style="padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; margin: 20px;" onclick="window.location.href = 'http://localhost:5173';">Go Back Home</button>
-        </div>
-        `);
-} )
-
+    if (updatedInfo.nModified === 0) {
+        throw new ApiError(404, "Student not found or already verified");
+    }
+    
+    return res.send(`
+    <div style="text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: Arial, sans-serif;">
+        <img src="https://cdn-icons-png.flaticon.com/128/4436/4436481.png" alt="Verify Email Icon" style="width: 100px; height: 100px;">
+        <h1 style="font-size: 36px; font-weight: bold; padding: 20px;">Email Verified Successfully!</h1>
+        <h4 style="margin-bottom: 20px;">Your email address was successfully verified.</h4>
+        <p style="margin-bottom: 20px; color: #666;">Please complete your profile by uploading the required documents.</p>
+        <button onclick="window.location.href='http://localhost:5173/StudentDocument/${id}'" 
+                style="background-color: #4E84C1; color: white; padding: 12px 24px; border: none; border-radius: 6px; 
+                       font-size: 16px; cursor: pointer; transition: background-color 0.3s;">
+            Continue to Document Upload
+        </button>
+    </div>
+    `);
+})
 
 const login = asyncHandler(async(req,res) => {
-
     const Email = req.user.Email
     const Password = req.user.Password
-
 
     if([Email, Password].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
@@ -177,43 +180,43 @@ const login = asyncHandler(async(req,res) => {
     })
 
     if(!StdLogin){
-        throw new ApiError(400, "Student does not exist")
-    }
-
-    if(!StdLogin.Isverified){
-        throw new ApiError(401, "Email is not verified");
+        throw new ApiError(400, "Student does not exist");
     }
 
     const StdPassCheck = await StdLogin.isPasswordCorrect(Password)
 
     if(!StdPassCheck){
-        throw new ApiError(403,"Password is incorrect",)
+        throw new ApiError(403, "Password is incorrect");
     }
 
-    const tempStd = StdLogin._id
+    const tempStd = StdLogin._id;
+    const accessToken = await StdLogin.generateAccessToken();
+    const refreshToken = await StdLogin.generateRefreshToken();
 
-    
-    const {Accesstoken, Refreshtoken} =  await generateAccessAndRefreshTokens(tempStd)
+    StdLogin.Refreshtoken = refreshToken;
+    await StdLogin.save({ validateBeforeSave: false });
 
-    const loggedInStd = await student.findById(tempStd).select("-Password -Refreshtoken")
+    const newLogin = { ...StdLogin.toObject(), accessToken, refreshToken };
+    delete newLogin.Password;
 
     const options = {
-        httpOnly:true,
-        secure:true,
-    }
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict'
+    };
 
     return res
-    .status(200)
-    .cookie("Accesstoken", Accesstoken, options)
-    .cookie("Refreshtoken", Refreshtoken, options)
-    .json(
-        new ApiResponse(
-            200,{
-            user:loggedInStd
-            }, "logged in"
-            )
-    )
-
+        .status(200)
+        .cookie('accessToken', accessToken, options)
+        .cookie('refreshToken', refreshToken, options)
+        .json(new ApiResponse(
+            200,
+            {
+                ...newLogin,
+                needsVerification: !StdLogin.Isverified
+            },
+            "Logged in successfully"
+        ))
 })
 
 const logout = asyncHandler(async(req,res)=>{
@@ -228,15 +231,15 @@ const logout = asyncHandler(async(req,res)=>{
             new:true
         }
     )
-    const options ={
-        httpOnly:true,
-        secure:true,
+    const options = {
+        httpOnly: true,
+        secure: true
     }
 
     return res
     .status(200)
-    .clearCookie("Accesstoken", options)
-    .clearCookie("Refreshtoken",  options)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged out"))
 })
 
@@ -413,7 +416,7 @@ const  resetPassword= asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req.cookies?.Refreshtoken || req.body?.Refreshtoken;
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
     if (!incomingRefreshToken) {
         throw new ApiError(401, "Unauthorized request");
@@ -431,7 +434,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             throw new ApiError(401, "Refresh token is expired or used");
         }
 
-        const {Accesstoken, Refreshtoken} = await generateAccessAndRefreshTokens(std._id);
+        const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(std._id);
 
         const options = {
             httpOnly: true,
@@ -440,9 +443,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
         return res
             .status(200)
-            .cookie("Accesstoken", Accesstoken, options)
-            .cookie("Refreshtoken", Refreshtoken, options)
-            .json(new ApiResponse(200, { Accesstoken }, "Access token refreshed"));
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", refreshToken, options)
+            .json(new ApiResponse(200, { accessToken }, "Access token refreshed"));
     } catch (error) {
         throw new ApiError(401, error?.message || "Invalid refresh token");
     }

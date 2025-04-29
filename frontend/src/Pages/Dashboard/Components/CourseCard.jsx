@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaBook, FaPlay, FaUserGraduate, FaCalendarAlt } from 'react-icons/fa';
+import { FaBook, FaPlay, FaUserGraduate, FaCalendarAlt, FaEdit } from 'react-icons/fa';
 import { daysOfWeek } from '../../../utils/statusUtils';
 import { formatTime } from '../../../utils/timeUtils';
 
@@ -9,7 +9,8 @@ const CourseCard = ({
   onVideoClick, 
   onDetailsClick,
   showEnrollments = false,
-  isTeacher = false 
+  isTeacher = false,
+  onEdit
 }) => {
   return (
     <div className="bg-white dark:bg-[#0a3553] rounded-lg shadow-sm hover:shadow-md transition-shadow">
@@ -63,13 +64,24 @@ const CourseCard = ({
               View Details
             </button>
           )}
-          <button
-            onClick={() => onVideoClick(course)}
-            className="flex items-center px-4 py-2 bg-[#4E84C1] hover:bg-[#3a6da3] text-white rounded-md transition-colors text-sm ml-auto"
-          >
-            <FaPlay className="h-4 w-4 mr-2" />
-            {showVideos ? 'Hide Videos' : 'View Videos'}
-          </button>
+          <div className="flex items-center gap-3">
+            {isTeacher && onEdit && (
+              <button
+                onClick={() => onEdit(course)}
+                className="flex items-center px-4 py-2 bg-gray-100 dark:bg-[#042439] hover:bg-gray-200 dark:hover:bg-[#031c2e] text-[#4E84C1] rounded-md transition-colors text-sm"
+              >
+                <FaEdit className="h-4 w-4 mr-2" />
+                Edit
+              </button>
+            )}
+            <button
+              onClick={() => onVideoClick(course)}
+              className="flex items-center px-4 py-2 bg-[#4E84C1] hover:bg-[#3a6da3] text-white rounded-md transition-colors text-sm"
+            >
+              <FaPlay className="h-4 w-4 mr-2" />
+              {showVideos ? 'Hide Videos' : 'View Videos'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

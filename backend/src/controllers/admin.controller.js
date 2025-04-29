@@ -8,6 +8,13 @@ import { contact } from "../models/contact.model.js";
 import { course } from "../models/course.model.js";
 import { Sendmail } from "../utils/Nodemailer.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { createNotification } from "./notification.controller.js";
+
+// Rate limiting map
+const loginAttempts = new Map();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_TIME = 30 * 60 * 1000; // 30 minutes
 
 const adminSignUp = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
@@ -55,39 +62,71 @@ const generateAccessAndRefreshTokens = async (admindID) => {
 const adminLogin = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
 
+    // Rate limiting check
+    const ipAddress = req.ip;
+    const currentTime = Date.now();
+    const userAttempts = loginAttempts.get(ipAddress) || { count: 0, timestamp: currentTime };
+
+    if (userAttempts.count >= MAX_ATTEMPTS) {
+        if (currentTime - userAttempts.timestamp < LOCKOUT_TIME) {
+            throw new ApiError(429, "Too many login attempts. Please try again later.");
+        }
+        loginAttempts.delete(ipAddress); // Reset after lockout period
+    }
+
     if ([username, password].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
     const loggedAdmin = await admin.findOne({ username });
-
     if (!loggedAdmin) {
-        throw new ApiError(400, "admin does not exist");
+        updateLoginAttempts(ipAddress);
+        throw new ApiError(400, "Admin does not exist");
     }
 
     const passwordCheck = await loggedAdmin.isPasswordCorrect(password);
-
     if (!passwordCheck) {
+        updateLoginAttempts(ipAddress);
         throw new ApiError(400, "Password is incorrect");
     }
 
     const temp_admin = loggedAdmin._id;
-
     const { Accesstoken, Refreshtoken } = await generateAccessAndRefreshTokens(temp_admin);
-
     const loggedadmin = await admin.findById(temp_admin).select("-password -Refreshtoken");
 
     const options = {
         httpOnly: true,
         secure: true,
+        sameSite: 'strict'
     };
 
     return res
         .status(200)
         .cookie("Accesstoken", Accesstoken, options)
         .cookie("Refreshtoken", Refreshtoken, options)
-        .json(new ApiResponse(200, { admin: loggedadmin }, "logged in successfully"));
+        .json(new ApiResponse(200, { 
+            admin: loggedadmin
+        }, "logged in successfully"));
 });
+
+// Helper function to update login attempts
+const updateLoginAttempts = (ipAddress) => {
+    const currentAttempts = loginAttempts.get(ipAddress) || { count: 0, timestamp: Date.now() };
+    loginAttempts.set(ipAddress, {
+        count: currentAttempts.count + 1,
+        timestamp: Date.now()
+    });
+};
+
+// Clean up old entries periodically
+setInterval(() => {
+    const currentTime = Date.now();
+    for (const [ip, data] of loginAttempts) {
+        if (currentTime - data.timestamp >= LOCKOUT_TIME) {
+            loginAttempts.delete(ip);
+        }
+    }
+}, LOCKOUT_TIME);
 
 const adminLogout = asyncHandler(async (req, res) => {
     await admin.findByIdAndUpdate(
@@ -126,23 +165,24 @@ const forApproval = asyncHandler(async (req, res) => {
         throw new ApiError(400, "admin not found");
     }
 
-    const studentsforApproval = await student.find({
-        Isverified: true
+    // Get all students and teachers who have submitted documents
+    const students = await student.find({
+        Studentdetails: { $ne: null }
     });
 
-    const teachersforApproval = await Teacher.find({
-        Isverified: true
+    const teachers = await Teacher.find({
+        Teacherdetails: { $ne: null }
     });
 
-    if (!studentsforApproval && !teachersforApproval) {
+    if (!students && !teachers) {
         return res
             .status(200)
-            .json(new ApiResponse(200, loggedAdmin, "No pending student or teacher"));
+            .json(new ApiResponse(200, loggedAdmin, "No student or teacher documents found"));
     }
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { admin: loggedAdmin, studentsforApproval, teachersforApproval }, "fetched successfully"));
+        .json(new ApiResponse(200, { admin: loggedAdmin, students, teachers }, "fetched successfully"));
 });
 
 const approveStudent = asyncHandler(async (req, res) => {
@@ -179,6 +219,16 @@ const approveStudent = asyncHandler(async (req, res) => {
     if (!theStudent) {
         throw new ApiError(400, "faild to approve or reject || student not found");
     }
+
+    // Create notification for student
+    await createNotification(
+        studentID,
+        'students',
+        'Document Verification Update',
+        `Your documents have been ${toApprove}. ${remarks ? `Remarks: ${remarks}` : ''}`,
+        toApprove === 'approved' ? 'success' : toApprove === 'rejected' ? 'error' : 'warning',
+        `/dashboard/student/${studentID}/home`
+    );
 
     console.log("email", email);
 
@@ -232,6 +282,16 @@ const approveTeacher = asyncHandler(async (req, res) => {
     if (!theTeacher) {
         throw new ApiError(400, "faild to approve or reject || student not found");
     }
+
+    // Create notification for teacher
+    await createNotification(
+        teacherID,
+        'teachers',
+        'Document Verification Update',
+        `Your documents have been ${toApprove}. ${remarks ? `Remarks: ${remarks}` : ''}`,
+        toApprove === 'approved' ? 'success' : toApprove === 'rejected' ? 'error' : 'warning',
+        `/dashboard/teacher/${teacherID}/home`
+    );
 
     await Sendmail(email, `Document Verification Status`,
         `<html>
@@ -404,9 +464,14 @@ const toapproveCourse = asyncHandler(async (req, res) => {
         throw new ApiError(400, "admin not found");
     }
 
-    const courseForApproval = await course.find({ isapproved: false }).populate("enrolledteacher");
+    // Get both pending and approved courses
+    const courses = await course.find({}).populate("enrolledteacher");
+    
+    if (!courses) {
+        throw new ApiError(404, "No courses found");
+    }
 
-    return res.status(200).json(new ApiResponse(200, courseForApproval, "fetched successfully"));
+    return res.status(200).json(new ApiResponse(200, courses, "Courses fetched successfully"));
 });
 
 const approveCourse = asyncHandler(async (req, res) => {
@@ -439,6 +504,16 @@ const approveCourse = asyncHandler(async (req, res) => {
 
         const Fname = req.body.Firstname;
 
+        // Create notification for teacher
+        await createNotification(
+            theCourse.enrolledteacher,
+            'teachers',
+            'Course Approval Update',
+            `Your course "${theCourse.coursename}" has been approved.`,
+            'success',
+            `/dashboard/teacher/${theCourse.enrolledteacher}/courses`
+        );
+
         Sendmail(req.body.email, `Course Approval Update`,
             `<html>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -457,7 +532,22 @@ const approveCourse = asyncHandler(async (req, res) => {
             .status(200)
             .json(new ApiResponse(200, theCourse, `Course approved successfully`));
     } else {
-        const theCourse = await course.findByIdAndDelete({ _id: courseID }, { new: true });
+        const theCourse = await course.findById(courseID);
+        if (!theCourse) {
+            throw new ApiError(400, "Course not found");
+        }
+
+        // Create notification for teacher before deleting course
+        await createNotification(
+            theCourse.enrolledteacher,
+            'teachers',
+            'Course Approval Update',
+            `Your course "${theCourse.coursename}" was not approved and has been removed.`,
+            'error',
+            `/dashboard/teacher/${theCourse.enrolledteacher}/courses`
+        );
+
+        await course.findByIdAndDelete(courseID);
         const Fname = req.body.Firstname;
 
         Sendmail(req.body.email, `Course Approval Update`,
