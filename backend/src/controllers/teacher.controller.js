@@ -28,7 +28,7 @@ const sendVerificationEmail = async (email, teacherId) => {
             <p style="margin: 20px;"> Hi, Please click the button below to verify your E-mail. </p>
             <img src="https://img.freepik.com/free-vector/illustration-e-mail-protection-concept-e-mail-envelope-with-file-document-attach-file-system-security-approved_1150-41788.jpg?size=626&ext=jpg&uid=R140292450&ga=GA1.1.553867909.1706200225&semt=ais" alt="Verification Image" style="width: 100%; height: auto;">
             <br>
-            <a href="${process.env.FRONTEND_URL}/verify-email?token=${teacherId}&type=teacher">
+            <a href="${process.env.FRONTEND_URL}/api/teacher/verify?id=${teacherId}">
                 <button style="background-color: black; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer;">Verify Email</button>
             </a>
         </div>`
@@ -97,12 +97,16 @@ const registerTeacher = asyncHandler(async (req, res) => {
 });
 
 const verifyEmail = asyncHandler(async (req, res) => {
-    const { token } = req.body;
+    const teacherId = req.query.id;
     
-    const teacher = await Teacher.findOne({ verificationToken: token });
+    if (!teacherId) {
+        throw new ApiError(400, "Teacher ID is required");
+    }
+
+    const teacher = await Teacher.findById(teacherId);
     
     if (!teacher) {
-        throw new ApiError(400, "Invalid verification token");
+        throw new ApiError(400, "Invalid teacher ID");
     }
     
     teacher.Isverified = true;

@@ -13,9 +13,10 @@ const FileUpload = ({ label, onFileChange, value }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:5173/api/upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
         onUploadProgress: (progressEvent) => {
           const progress = (progressEvent.loaded / progressEvent.total) * 100;
           setUploadProgress(Math.round(progress));

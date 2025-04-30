@@ -158,7 +158,7 @@ const mailVerified = asyncHandler(async(req,res)=>{
         <h1 style="font-size: 36px; font-weight: bold; padding: 20px;">Email Verified Successfully!</h1>
         <h4 style="margin-bottom: 20px;">Your email address was successfully verified.</h4>
         <p style="margin-bottom: 20px; color: #666;">Please complete your profile by uploading the required documents.</p>
-        <button onclick="window.location.href='http://localhost:5173/StudentDocument/${id}'" 
+        <button onclick="window.location.href='${process.env.FRONTEND_URL}/StudentDocument/${id}'" 
                 style="background-color: #4E84C1; color: white; padding: 12px 24px; border: none; border-radius: 6px; 
                        font-size: 16px; cursor: pointer; transition: background-color 0.3s;">
             Continue to Document Upload
