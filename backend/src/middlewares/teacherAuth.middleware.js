@@ -33,18 +33,31 @@ const authTeacher = asyncHandler(async(req, _, next) => {
             throw new ApiError(401, "Teacher account not found");
         }
 
-        // Add additional checks for teacher status
-        if (!teacher.Isverified) {
-            throw new ApiError(401, "Email not verified");
+        // Check if this is a verification-related route or document upload route
+        const isVerificationRoute = req.path.includes('/verification/');
+        const isDocumentRoute = req.path.includes('/TeacherDocument/');
+        const isProfileRoute = req.path.includes('/teacher/');
+
+        // Only enforce email verification for non-verification routes
+        if (!isVerificationRoute && !teacher.Isverified) {
+            throw new ApiError(401, "Please verify your email first");
         }
 
-        // Check if this is a verification-related route
-        const isVerificationRoute = req.path.includes('/verification/');
-        const isDocumentUploadRoute = req.path.includes('/TeacherDocument/');
+        // For routes that require document verification
+        if (!isVerificationRoute && !isDocumentRoute && !isProfileRoute) {
+            // Check if documents are uploaded
+            if (!teacher.Teacherdetails) {
+                throw new ApiError(401, "Please complete document verification");
+            }
 
-        // Only check approval status for non-verification routes
-        if (!isVerificationRoute && !isDocumentUploadRoute && teacher.Isapproved !== 'approved') {
-            throw new ApiError(401, "Account not approved");
+            // Check approval status
+            if (teacher.Isapproved === 'rejected') {
+                throw new ApiError(401, "Your documents were rejected. Please resubmit.");
+            }
+
+            if (teacher.Isapproved === 'pending') {
+                throw new ApiError(401, "Your documents are under review");
+            }
         }
 
         req.teacher = teacher;
@@ -52,6 +65,6 @@ const authTeacher = asyncHandler(async(req, _, next) => {
     } catch (error) {
         next(error);
     }
-})
+});
 
 export {authTeacher};

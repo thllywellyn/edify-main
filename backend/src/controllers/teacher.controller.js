@@ -128,14 +128,13 @@ const verifyEmail = asyncHandler(async (req, res) => {
 });
 
 const login = asyncHandler(async (req, res) => {
-    const Email = req.user.Email;
-    const Password = req.user.Password;
+    const { Email, Password } = req.body;
 
     if (!Email || !Password) {
         throw new ApiError(400, "Email and password are required");
     }
 
-    const teacher = await Teacher.findOne({ Email });
+    const teacher = await Teacher.findOne({ Email }).select("+Password");
 
     if (!teacher) {
         throw new ApiError(403, "Teacher does not exist");
@@ -148,7 +147,9 @@ const login = asyncHandler(async (req, res) => {
     }
 
     const { Accesstoken, Refreshtoken } = await generateAccessAndRefreshTokens(teacher._id);
-    const loggedInTeacher = await Teacher.findById(teacher._id).select("-Password -Refreshtoken");
+    const loggedInTeacher = await Teacher.findById(teacher._id)
+        .select("-Password -Refreshtoken")
+        .populate('Teacherdetails');
 
     const options = {
         httpOnly: true,
@@ -156,19 +157,70 @@ const login = asyncHandler(async (req, res) => {
         sameSite: 'strict'
     };
 
-    const needsVerification = !loggedInTeacher.Isverified;
-    const needsDocuments = !loggedInTeacher.Teacherdetails;
+    // Check verification status
+    if (!loggedInTeacher.Isverified) {
+        // Send verification email again if needed
+        await sendVerificationEmail(Email, loggedInTeacher._id);
+        return res
+            .status(200)
+            .cookie("Accesstoken", Accesstoken, options)
+            .cookie("Refreshtoken", Refreshtoken, options)
+            .json(new ApiResponse(200, {
+                user: {
+                    ...loggedInTeacher.toObject(),
+                    needsEmailVerification: true
+                }
+            }, "Please verify your email first"));
+    }
+
+    // Check if documents are uploaded
+    if (!loggedInTeacher.Teacherdetails) {
+        return res
+            .status(200)
+            .cookie("Accesstoken", Accesstoken, options)
+            .cookie("Refreshtoken", Refreshtoken, options)
+            .json(new ApiResponse(200, {
+                user: {
+                    ...loggedInTeacher.toObject(),
+                    needsDocuments: true
+                }
+            }, "Please complete your document verification"));
+    }
+
+    // Check approval status
+    if (loggedInTeacher.Isapproved === 'pending') {
+        return res
+            .status(200)
+            .cookie("Accesstoken", Accesstoken, options)
+            .cookie("Refreshtoken", Refreshtoken, options)
+            .json(new ApiResponse(200, {
+                user: {
+                    ...loggedInTeacher.toObject(),
+                    documentsUnderReview: true
+                }
+            }, "Your documents are under review"));
+    }
+
+    if (loggedInTeacher.Isapproved === 'rejected') {
+        return res
+            .status(200)
+            .cookie("Accesstoken", Accesstoken, options)
+            .cookie("Refreshtoken", Refreshtoken, options)
+            .json(new ApiResponse(200, {
+                user: {
+                    ...loggedInTeacher.toObject(),
+                    documentsRejected: true,
+                    remarks: loggedInTeacher.Remarks
+                }
+            }, "Your documents were rejected. Please check remarks and resubmit."));
+    }
 
     return res
         .status(200)
         .cookie("Accesstoken", Accesstoken, options)
         .cookie("Refreshtoken", Refreshtoken, options)
-        .json(new ApiResponse(200, { 
-            user: {
-                ...loggedInTeacher.toObject(),
-                needsVerification,
-                needsDocuments
-            }
+        .json(new ApiResponse(200, {
+            user: loggedInTeacher
         }, "Logged in successfully"));
 });
 
