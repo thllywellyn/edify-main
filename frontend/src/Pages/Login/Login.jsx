@@ -64,10 +64,10 @@ export default function Login() {
         throw new Error(responseData.message || 'Login failed');
       }
 
-      const userData = responseData.data;
+      const userData = responseData.data.user;
       
       // Check if document verification is needed
-      if (userData.needsVerification || (!userData.Studentdetails && !userData.Teacherdetails)) {
+      if (!userData.Isverified || !userData.Teacherdetails) {
         const docPath = userType === 'student' ? 'StudentDocument' : 'TeacherDocument';
         await auth.login(userData, userType);
         navigate(`/${docPath}/${userData._id}`);
