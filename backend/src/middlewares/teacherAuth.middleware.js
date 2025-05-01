@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const authTeacher = asyncHandler(async(req, _, next) => {
     try {
         const accToken = req.cookies?.Accesstoken || req.cookies?.accessToken || req.headers?.authorization?.replace('Bearer ', '');
+        
         if (!accToken) {
             throw new ApiError(401, "Unauthorized: Please log in to access this resource");
         }
@@ -32,8 +33,6 @@ const authTeacher = asyncHandler(async(req, _, next) => {
         if (!teacher) {
             throw new ApiError(401, "Teacher account not found");
         }
-
-        // Temporarily skip document verification checks
 
         req.teacher = teacher;
         next();

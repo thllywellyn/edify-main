@@ -66,15 +66,27 @@ export default function Login() {
 
       const userData = responseData.data.user;
       
-      // Check if document verification is needed
-      if (!userData.Isverified || !userData.Teacherdetails) {
-        const docPath = userType === 'student' ? 'StudentDocument' : 'TeacherDocument';
+      // Skip document verification for teachers
+      if (userType === 'teacher') {
         await auth.login(userData, userType);
-        navigate(`/${docPath}/${userData._id}`);
         return;
       }
 
-      // Let AuthContext handle the rest of the navigation based on user status
+      // For students, keep the regular verification flow
+      if (userType === 'student') {
+        if (!userData.Isverified) {
+          await auth.login(userData, userType);
+          navigate('/verify-email');
+          return;
+        }
+        
+        if (!userData.Studentdocs) {
+          await auth.login(userData, userType);
+          navigate(`/StudentDocument/${userData._id}`);
+          return;
+        }
+      }
+
       await auth.login(userData, userType);
       
     } catch (error) {

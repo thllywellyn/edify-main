@@ -9,7 +9,6 @@ import Login from './Pages/Login/Login'
 import Signup from './Pages/Signup/Signup'
 import AdminLogin from './Pages/Login/AdminLogin'
 import StudentDocument from './Pages/Components/DocumentVerification/StudentDocument'
-import TeacherDocument from './Pages/Components/DocumentVerification/TeacherDocument'
 import VarifyEmail from './Pages/Components/VarifyEmail/VarifyEmail'
 import Rejected from './Pages/Response/Rejected'
 import Pending from './Pages/Response/Pending'
@@ -41,7 +40,6 @@ function App() {
         <Route path="/Signup" element={<Signup />} />
         <Route path="/Search/:subject" element={<SearchData />} />
         <Route path="/StudentDocument/:Data" element={<ProtectedRoute><StudentDocument /></ProtectedRoute>} />
-        <Route path="/TeacherDocument/:Data" element={<TeacherDocument />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />

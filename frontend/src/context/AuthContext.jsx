@@ -82,6 +82,23 @@ export function AuthProvider({ children }) {
             setLoading(true);
             setError(null);
             
+            setUser(userData);
+            if (userType === 'teacher') {
+                // For teachers, directly navigate to their dashboard
+                navigate(`/dashboard/teacher/${userData._id}/home`);
+            } else if (userType === 'student') {
+                // Keep existing student verification logic
+                if (!userData.Isverified) {
+                    navigate('/verify-email');
+                    return;
+                }
+                if (!userData.Studentdocs) {
+                    navigate(`/StudentDocument/${userData._id}`);
+                    return;
+                }
+                navigate('/student/dashboard');
+            }
+            
             const userWithType = { ...userData, type: userType };
             setUser(userWithType);
             
@@ -90,9 +107,6 @@ export function AuthProvider({ children }) {
                 timestamp: new Date().getTime()
             };
             localStorage.setItem('user', JSON.stringify(userSession));
-            
-            // Let the redirect happen after state updates
-            setTimeout(() => handleRedirect(userWithType), 0);
             
         } catch (err) {
             console.error('Login error:', err);

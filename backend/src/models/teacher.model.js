@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 import crypto from "crypto"
 
 const teacherSchema = new mongoose.Schema({
-
     Email:{
         type:String,
         required:true,
@@ -18,7 +17,6 @@ const teacherSchema = new mongoose.Schema({
         type:String,
         required:true,
         trim:true,
-        
     },
 
     Lastname:{
@@ -33,41 +31,10 @@ const teacherSchema = new mongoose.Schema({
     },
 
     forgetPasswordToken: String,
-
-
     forgetPasswordExpiry: Date,
-
-    emailVerified: {
-        type: Boolean,
-        default: false
-    },
-    emailVerificationToken: String,
-    emailVerificationExpiry: Date,
-
-    Isverified: {
-        type:Boolean,
-        default:false,
-    },
-
-    verificationToken: String,
-
-    Isapproved:{
-        type: String,
-        enum: ['approved', 'rejected', 'pending', 'reupload'],
-        default: 'pending',
-    },
-
-    Remarks:{
-        type:String
-    },
     
     Refreshtoken:{
         type:String,
-    },
-
-    Teacherdetails:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"Teacherdocs"
     },
 
     Balance: {
@@ -86,7 +53,6 @@ const teacherSchema = new mongoose.Schema({
         }
     }],
 
-
     enrolledStudent: [{
         studentId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -97,10 +63,7 @@ const teacherSchema = new mongoose.Schema({
             default: true
         }
     }]
-
 },
-
-    
 {
     timestamps:true,
 }

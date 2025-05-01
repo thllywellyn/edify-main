@@ -156,8 +156,6 @@ const login = asyncHandler(async (req, res) => {
         sameSite: 'strict'
     };
 
-    // Temporarily skip document verification checks
-
     return res
         .status(200)
         .cookie("Accesstoken", Accesstoken, options)
