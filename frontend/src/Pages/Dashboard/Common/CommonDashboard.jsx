@@ -12,9 +12,10 @@ function CommonDashboard({ userType }) {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { isDarkMode, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const sidebarRef = useRef(null);
   const buttonRef = useRef(null);
 
@@ -44,30 +45,124 @@ function CommonDashboard({ userType }) {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
       try {
-        const response = await fetch(`/api/${userType}/${userType}Document/${ID}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
+        // Try to use the user data from AuthContext if available
+        if (user && user._id === ID) {
+          console.log("Using data from AuthContext");
+          setUserData(user);
+          setIsLoading(false);
+          return;
         }
-
-        const data = await response.json();
-        setUserData(data.data);
+        
+        // For teachers, try multiple endpoints in sequence
+        if (userType === 'Teacher') {
+          // First try the primary endpoint for teacher profile
+          try {
+            const response = await fetch(`/api/teacher/teacher/${ID}`, {
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data && data.data) {
+                setUserData(data.data);
+                setIsLoading(false);
+                return;
+              }
+            }
+          } catch (err) {
+            console.log("First endpoint failed:", err);
+          }
+          
+          // If first fails, try the document endpoint
+          try {
+            const response = await fetch(`/api/teacher/TeacherDocument/${ID}`, {
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data && data.data) {
+                setUserData(data.data);
+                setIsLoading(false);
+                return;
+              }
+            }
+          } catch (err) {
+            console.log("Second endpoint failed:", err);
+          }
+          
+          // If both fail, throw error to be caught below
+          throw new Error("Could not fetch teacher data from any endpoint");
+        } else {
+          // For students, continue using the existing endpoint
+          const response = await fetch(`/api/${userType.toLowerCase()}/${userType}Document/${ID}`, {
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch student data (Status: ${response.status})`);
+          }
+          
+          const data = await response.json();
+          if (data && data.data) {
+            setUserData(data.data);
+          } else {
+            throw new Error('Invalid data format received');
+          }
+        }
       } catch (error) {
-        setError(error.message);
+        console.error("Dashboard data fetch error:", error);
+        setError(error.message || "Failed to fetch user data");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchUserData();
-  }, [ID, userType]);
+  }, [ID, userType, user]);
 
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[#031c2e]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#4E84C1]"></div>
+        <span className="ml-3 text-gray-700 dark:text-gray-300">Loading dashboard...</span>
+      </div>
+    );
+  }
+
+  if (error && !userData) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-[#031c2e] p-4">
+        <div className="text-red-500 text-center text-xl mb-4">Error: {error}</div>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-[#4E84C1] text-white rounded-lg hover:bg-[#3a6da3] transition-colors"
+          >
+            Retry
+          </button>
+          <button 
+            onClick={() => navigate('/login')} 
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

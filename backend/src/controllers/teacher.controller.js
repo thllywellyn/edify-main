@@ -252,18 +252,34 @@ const addTeacherDetails = asyncHandler(async(req, res) => {
 })
 
 const teacherdocuments = asyncHandler(async(req, res)=>{
-    const teacherID = req.body.teacherID;
+    const teacherID = req.params.id || req.body.teacherID;
 
-    const teacherDocs = await Teacherdocs.findById(teacherID);
+    // First try to get the teacher to check if they exist
+    const teacher = await Teacher.findById(teacherID);
+    if(!teacher) {
+        throw new ApiError(404, 'Teacher not found');
+    }
+    
+    // If teacher exists but no Teacherdetails reference, return the teacher data instead
+    if(!teacher.Teacherdetails) {
+        return res 
+            .status(200)
+            .json(new ApiResponse(200, teacher, "Teacher data fetched"));
+    }
 
+    // Otherwise get the teacher document details
+    const teacherDocs = await Teacherdocs.findById(teacher.Teacherdetails);
     if(!teacherDocs){
-        throw new ApiError(400, 'no teacher found');
+        // If we can't find the documents, still return the teacher data
+        return res 
+            .status(200)
+            .json(new ApiResponse(200, teacher, "Teacher data fetched (no documents)"));
     }
 
     return res 
-    .status(200)
-    .json(new ApiResponse(200, teacherDocs, "teacher documents fetched"))
-})
+        .status(200)
+        .json(new ApiResponse(200, {...teacher.toObject(), documents: teacherDocs}, "Teacher data with documents fetched"));
+});
 
 const ForgetPassword=asyncHandler(async(req,res)=>{
 
