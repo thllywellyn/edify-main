@@ -4,7 +4,8 @@ import {
     verifyEmail,
     login, 
     logout, 
-    teacherVerification,
+    getTeacher,
+    addTeacherDetails,
     teacherdocuments, 
     ForgetPassword,
     ResetPassword,
@@ -21,6 +22,7 @@ router.route("/verify").get(verifyEmail);
 router.route("/login").post(authSchema, login);
 router.route("/logout").post(authTeacher, logout);
 router.route("/refresh-token").post(refreshAccessToken);
+router.route("/teacher/:id").get(authTeacher, getTeacher);
 
 router.route("/verification/:id").post(
     authTeacher,
@@ -46,7 +48,7 @@ router.route("/verification/:id").post(
             maxCount: 1
         }
     ]),
-    teacherVerification
+    addTeacherDetails
 );
 
 router.route("/TeacherDocument/:id").get(authTeacher, teacherdocuments);
