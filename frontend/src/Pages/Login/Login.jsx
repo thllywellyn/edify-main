@@ -74,13 +74,14 @@ export default function Login() {
 
       // For students, keep the regular verification flow
       if (userType === 'student') {
-        if (!userData.Isverified) {
+        // Add safety check for userData and Isverified property
+        if (userData && userData.Isverified === false) {
           await auth.login(userData, userType);
           navigate('/verify-email');
           return;
         }
         
-        if (!userData.Studentdocs) {
+        if (!userData || !userData.Studentdocs) {
           await auth.login(userData, userType);
           navigate(`/StudentDocument/${userData._id}`);
           return;
@@ -119,7 +120,12 @@ export default function Login() {
         throw new Error(responseData.message || 'Login failed');
       }
 
-      if (!responseData.data.Isverified) {
+      // Add safety check for responseData.data and Isverified property
+      if (!responseData || !responseData.data) {
+        throw new Error('Invalid response format');
+      }
+
+      if (responseData.data && responseData.data.Isverified === false) {
         // Redirect to email verification page if email is not verified
         navigate('/verify-email', { 
           state: { 

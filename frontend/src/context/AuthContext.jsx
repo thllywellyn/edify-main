@@ -87,12 +87,12 @@ export function AuthProvider({ children }) {
                 // For teachers, directly navigate to their dashboard
                 navigate(`/dashboard/teacher/${userData._id}/home`);
             } else if (userType === 'student') {
-                // Keep existing student verification logic
-                if (!userData.Isverified) {
+                // Add safety check for Isverified property
+                if (userData && userData.Isverified === false) {
                     navigate('/verify-email');
                     return;
                 }
-                if (!userData.Studentdocs) {
+                if (!userData || !userData.Studentdocs) {
                     navigate(`/StudentDocument/${userData._id}`);
                     return;
                 }
