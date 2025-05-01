@@ -5,7 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const authTeacher = asyncHandler(async(req, _, next) => {
     try {
-        const accToken = req.cookies?.Accesstoken;
+        const accToken = req.cookies?.Accesstoken || req.cookies?.accessToken || req.headers?.authorization?.replace('Bearer ', '');
         if (!accToken) {
             throw new ApiError(401, "Unauthorized: Please log in to access this resource");
         }
@@ -13,6 +13,9 @@ const authTeacher = asyncHandler(async(req, _, next) => {
         let decodedToken;
         try {
             decodedToken = jwt.verify(accToken, process.env.ACCESS_TOKEN_SECRET);
+            if (!decodedToken._id || decodedToken.type !== 'teacher') {
+                throw new ApiError(401, "Invalid access token");
+            }
         } catch (error) {
             if (error.name === 'TokenExpiredError') {
                 throw new ApiError(401, "Access token has expired");
@@ -23,15 +26,25 @@ const authTeacher = asyncHandler(async(req, _, next) => {
             throw error;
         }
 
-        if (!decodedToken?._id) {
-            throw new ApiError(401, "Invalid access token format");
-        }
-
         const teacher = await Teacher.findById(decodedToken._id)
             .select("-Password -Refreshtoken");
 
         if (!teacher) {
             throw new ApiError(401, "Teacher account not found");
+        }
+
+        // Add additional checks for teacher status
+        if (!teacher.Isverified) {
+            throw new ApiError(401, "Email not verified");
+        }
+
+        // Check if this is a verification-related route
+        const isVerificationRoute = req.path.includes('/verification/');
+        const isDocumentUploadRoute = req.path.includes('/TeacherDocument/');
+
+        // Only check approval status for non-verification routes
+        if (!isVerificationRoute && !isDocumentUploadRoute && teacher.Isapproved !== 'approved') {
+            throw new ApiError(401, "Account not approved");
         }
 
         req.teacher = teacher;

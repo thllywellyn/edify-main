@@ -128,15 +128,11 @@ const verifyEmail = asyncHandler(async (req, res) => {
 });
 
 const login = asyncHandler(async (req, res) => {
+    const Email = req.user.Email;
+    const Password = req.user.Password;
 
-    const Email = req.user.Email
-    const Password = req.user.Password
-
-    if (!Email) {
-        throw new ApiError(400, "E-mail is required");
-    }
-    if (!Password) {
-        throw new ApiError(400, "Password is required");
+    if (!Email || !Password) {
+        throw new ApiError(400, "Email and password are required");
     }
 
     const teacher = await Teacher.findOne({ Email });
@@ -145,10 +141,6 @@ const login = asyncHandler(async (req, res) => {
         throw new ApiError(403, "Teacher does not exist");
     }
 
-    if (!teacher.Isverified) {
-        throw new ApiError(401, "Email is not verified");
-    }
-    
     const isPasswordCorrect = await teacher.isPasswordCorrect(Password);
 
     if (!isPasswordCorrect) {
@@ -156,19 +148,28 @@ const login = asyncHandler(async (req, res) => {
     }
 
     const { Accesstoken, Refreshtoken } = await generateAccessAndRefreshTokens(teacher._id);
-
     const loggedInTeacher = await Teacher.findById(teacher._id).select("-Password -Refreshtoken");
 
     const options = {
         httpOnly: true,
         secure: true,
+        sameSite: 'strict'
     };
+
+    const needsVerification = !loggedInTeacher.Isverified;
+    const needsDocuments = !loggedInTeacher.Teacherdetails;
 
     return res
         .status(200)
         .cookie("Accesstoken", Accesstoken, options)
         .cookie("Refreshtoken", Refreshtoken, options)
-        .json(new ApiResponse(200, { user: loggedInTeacher }, "Logged in"));
+        .json(new ApiResponse(200, { 
+            user: {
+                ...loggedInTeacher.toObject(),
+                needsVerification,
+                needsDocuments
+            }
+        }, "Logged in successfully"));
 });
 
 const logout = asyncHandler(async(req, res)=>{
