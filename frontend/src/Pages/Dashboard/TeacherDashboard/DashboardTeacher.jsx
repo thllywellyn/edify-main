@@ -80,13 +80,13 @@ function DashboardTeacher() {
         }
 
         const user = await response.json();
-        setAmount(user.data.newTeacher.balance);
+        setAmount(user.data.balance);
       } catch (error) {
         console.log(error);
       }
     };
     getAmount();
-  }, [amount, popup]);
+  }, [ID, popup]);
 
   useEffect(() => {
     const getCourses = async () => {
