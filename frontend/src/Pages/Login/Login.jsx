@@ -64,37 +64,52 @@ export default function Login() {
         throw new Error(responseData.message || 'Login failed');
       }
 
-      if (!responseData || !responseData.data) {
-        throw new Error('Invalid response format');
-      }
-
-      const userData = responseData.data;
-      
-      // Skip document verification for teachers
+      // For teachers, use existing logic
       if (userType === 'teacher') {
+        const userData = responseData.data.user;
         await auth.login(userData, userType);
         return;
       }
 
-      // For students, keep the regular verification flow
+      // For students
       if (userType === 'student') {
-        await auth.login(userData, userType);
+        // responseData.data contains the direct student object from backend
+        const studentData = responseData.data;
+        
+        if (!studentData || !studentData._id) {
+          throw new Error('Invalid response format');
+        }
 
-        if (userData.needsVerification) {
+        // First login the student
+        await auth.login(studentData, userType);
+
+        // Then handle redirects based on verification status
+        if (studentData.needsVerification) {
           navigate('/verify-email');
           return;
         }
-        
-        if (!userData.Studentdetails) {
-          navigate(`/StudentDocument/${userData._id}`);
+
+        if (!studentData.Studentdetails) {
+          navigate(`/StudentDocument/${studentData._id}`);
           return;
         }
 
-        // Navigate to student dashboard
-        navigate(`/dashboard/student/${userData._id}/search`);
+        if (studentData.Isapproved === 'pending') {
+          navigate('/pending');
+          return;
+        }
+
+        if (studentData.Isapproved === 'rejected') {
+          navigate(`/rejected/${studentData._id}/student`);
+          return;
+        }
+
+        // If all checks pass, navigate to dashboard
+        navigate(`/dashboard/student/${studentData._id}/search`);
       }
       
     } catch (error) {
+      console.error('Login error:', error);
       setErr(error.message);
     } finally {
       setIsLoading(false);
