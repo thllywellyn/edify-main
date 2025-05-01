@@ -167,11 +167,65 @@ const mailVerified = asyncHandler(async(req,res)=>{
     `);
 })
 
-const login = asyncHandler(async(req,res) => {
+// const login = asyncHandler(async(req,res) => {
+//     const Email = req.user.Email
+//     const Password = req.user.Password
+
+//     if([Email, Password].some((field) => field?.trim() === "")) {
+//         throw new ApiError(400, "All fields are required");
+//     }
+
+//     const StdLogin = await student.findOne({
+//         Email
+//     })
+
+//     if(!StdLogin){
+//         throw new ApiError(400, "Student does not exist");
+//     }
+
+//     const StdPassCheck = await StdLogin.isPasswordCorrect(Password)
+
+//     if(!StdPassCheck){
+//         throw new ApiError(403, "Password is incorrect");
+//     }
+
+//     const tempStd = StdLogin._id;
+//     const accessToken = await StdLogin.generateAccessToken();
+//     const refreshToken = await StdLogin.generateRefreshToken();
+
+//     StdLogin.Refreshtoken = refreshToken;
+//     await StdLogin.save({ validateBeforeSave: false });
+
+//     // Convert to plain object and add tokens
+//     const studentObj = StdLogin.toObject();
+//     studentObj.accessToken = accessToken;
+//     studentObj.refreshToken = refreshToken;
+//     delete studentObj.Password;
+
+//     const options = {
+//         httpOnly: true,
+//         secure: true,
+//         sameSite: 'strict'
+//     };
+
+//     return res
+//         .status(200)
+//         .cookie('accessToken', accessToken, options)
+//         .cookie('refreshToken', refreshToken, options)
+//         .json(new ApiResponse(
+//             200,
+//             {
+//                 ...studentObj,
+//                 needsVerification: studentObj.Isverified === undefined ? true : !studentObj.Isverified
+//             },
+//             "Logged in successfully"
+//         ))
+// })
+const login = asyncHandler(async (req, res) => {
     const Email = req.user.Email
     const Password = req.user.Password
 
-    if([Email, Password].some((field) => field?.trim() === "")) {
+    if ([Email, Password].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
@@ -179,13 +233,13 @@ const login = asyncHandler(async(req,res) => {
         Email
     })
 
-    if(!StdLogin){
+    if (!StdLogin) {
         throw new ApiError(400, "Student does not exist");
     }
 
     const StdPassCheck = await StdLogin.isPasswordCorrect(Password)
 
-    if(!StdPassCheck){
+    if (!StdPassCheck) {
         throw new ApiError(403, "Password is incorrect");
     }
 
@@ -196,11 +250,8 @@ const login = asyncHandler(async(req,res) => {
     StdLogin.Refreshtoken = refreshToken;
     await StdLogin.save({ validateBeforeSave: false });
 
-    // Convert to plain object and add tokens
-    const studentObj = StdLogin.toObject();
-    studentObj.accessToken = accessToken;
-    studentObj.refreshToken = refreshToken;
-    delete studentObj.Password;
+    const newLogin = { ...StdLogin.toObject(), accessToken, refreshToken };
+    delete newLogin.Password;
 
     const options = {
         httpOnly: true,
@@ -215,8 +266,8 @@ const login = asyncHandler(async(req,res) => {
         .json(new ApiResponse(
             200,
             {
-                ...studentObj,
-                needsVerification: studentObj.Isverified === undefined ? true : !studentObj.Isverified
+                ...newLogin,
+                needsVerification: !StdLogin.Isverified
             },
             "Logged in successfully"
         ))
