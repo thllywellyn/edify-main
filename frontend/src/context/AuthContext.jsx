@@ -92,11 +92,10 @@ export function AuthProvider({ children }) {
                     navigate('/verify-email');
                     return;
                 }
-                // if (!userData || !userData.Studentdocs) {
-                //     navigate(`/StudentDocument/${userData._id}`);
-                //     return;
-                // }
-
+                if (!userData || !userData.Studentdocs) {
+                    navigate(`/StudentDocument/${userData._id}`);
+                    return;
+                }
                 navigate('/student/dashboard');
             }
             

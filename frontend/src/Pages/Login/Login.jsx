@@ -81,11 +81,11 @@ export default function Login() {
           return;
         }
         
-        // if (!userData || !userData.Studentdocs) {
-        //   await auth.login(userData, userType);
-        //   navigate(`/StudentDocument/${userData._id}`);
-        //   return;
-        // }
+        if (!userData || !userData.Studentdocs) {
+          await auth.login(userData, userType);
+          navigate(`/StudentDocument/${userData._id}`);
+          return;
+        }
       }
 
       await auth.login(userData, userType);
