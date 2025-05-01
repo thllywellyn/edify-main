@@ -64,7 +64,11 @@ export default function Login() {
         throw new Error(responseData.message || 'Login failed');
       }
 
-      const userData = responseData.data.user;
+      if (!responseData || !responseData.data) {
+        throw new Error('Invalid response format');
+      }
+
+      const userData = responseData.data;
       
       // Skip document verification for teachers
       if (userType === 'teacher') {
@@ -74,21 +78,21 @@ export default function Login() {
 
       // For students, keep the regular verification flow
       if (userType === 'student') {
-        // Add safety check for userData and Isverified property
-        if (userData && userData.Isverified === false) {
-          await auth.login(userData, userType);
+        await auth.login(userData, userType);
+
+        if (userData.needsVerification) {
           navigate('/verify-email');
           return;
         }
         
-        if (!userData || !userData.Studentdocs) {
-          await auth.login(userData, userType);
+        if (!userData.Studentdetails) {
           navigate(`/StudentDocument/${userData._id}`);
           return;
         }
-      }
 
-      await auth.login(userData, userType);
+        // Navigate to student dashboard
+        navigate(`/dashboard/student/${userData._id}/search`);
+      }
       
     } catch (error) {
       setErr(error.message);
