@@ -196,8 +196,11 @@ const login = asyncHandler(async(req,res) => {
     StdLogin.Refreshtoken = refreshToken;
     await StdLogin.save({ validateBeforeSave: false });
 
-    const newLogin = { ...StdLogin.toObject(), accessToken, refreshToken };
-    delete newLogin.Password;
+    // Convert to plain object and add tokens
+    const studentObj = StdLogin.toObject();
+    studentObj.accessToken = accessToken;
+    studentObj.refreshToken = refreshToken;
+    delete studentObj.Password;
 
     const options = {
         httpOnly: true,
@@ -212,8 +215,8 @@ const login = asyncHandler(async(req,res) => {
         .json(new ApiResponse(
             200,
             {
-                ...newLogin,
-                needsVerification: !StdLogin.Isverified
+                ...studentObj,
+                needsVerification: studentObj.Isverified === undefined ? true : !studentObj.Isverified
             },
             "Logged in successfully"
         ))
