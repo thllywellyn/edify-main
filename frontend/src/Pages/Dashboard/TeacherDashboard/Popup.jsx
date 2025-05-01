@@ -103,7 +103,7 @@ function Popup({ onClose, subject }) {
 
   return (
     <Modal title={`Create ${subject} Course`} onClose={onClose}>
-      <div className="space-y-6">
+      <div className="space-y-6 max-h-[70vh] overflow-y-auto">
         <div className="space-y-4">
           <label className="block text-gray-700 dark:text-gray-300 mb-2">Class Schedule</label>
           {Object.keys(day).map((d) => (
