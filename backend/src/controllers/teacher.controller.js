@@ -148,8 +148,7 @@ const login = asyncHandler(async (req, res) => {
 
     const { Accesstoken, Refreshtoken } = await generateAccessAndRefreshTokens(teacher._id);
     const loggedInTeacher = await Teacher.findById(teacher._id)
-        .select("-Password -Refreshtoken")
-        .populate('Teacherdetails');
+        .select("-Password -Refreshtoken");
 
     const options = {
         httpOnly: true,
@@ -157,63 +156,7 @@ const login = asyncHandler(async (req, res) => {
         sameSite: 'strict'
     };
 
-    // Check verification status
-    if (!loggedInTeacher.Isverified) {
-        // Send verification email again if needed
-        await sendVerificationEmail(Email, loggedInTeacher._id);
-        return res
-            .status(200)
-            .cookie("Accesstoken", Accesstoken, options)
-            .cookie("Refreshtoken", Refreshtoken, options)
-            .json(new ApiResponse(200, {
-                user: {
-                    ...loggedInTeacher.toObject(),
-                    needsEmailVerification: true
-                }
-            }, "Please verify your email first"));
-    }
-
-    // Check if documents are uploaded
-    if (!loggedInTeacher.Teacherdetails) {
-        return res
-            .status(200)
-            .cookie("Accesstoken", Accesstoken, options)
-            .cookie("Refreshtoken", Refreshtoken, options)
-            .json(new ApiResponse(200, {
-                user: {
-                    ...loggedInTeacher.toObject(),
-                    needsDocuments: true
-                }
-            }, "Please complete your document verification"));
-    }
-
-    // Check approval status
-    if (loggedInTeacher.Isapproved === 'pending') {
-        return res
-            .status(200)
-            .cookie("Accesstoken", Accesstoken, options)
-            .cookie("Refreshtoken", Refreshtoken, options)
-            .json(new ApiResponse(200, {
-                user: {
-                    ...loggedInTeacher.toObject(),
-                    documentsUnderReview: true
-                }
-            }, "Your documents are under review"));
-    }
-
-    if (loggedInTeacher.Isapproved === 'rejected') {
-        return res
-            .status(200)
-            .cookie("Accesstoken", Accesstoken, options)
-            .cookie("Refreshtoken", Refreshtoken, options)
-            .json(new ApiResponse(200, {
-                user: {
-                    ...loggedInTeacher.toObject(),
-                    documentsRejected: true,
-                    remarks: loggedInTeacher.Remarks
-                }
-            }, "Your documents were rejected. Please check remarks and resubmit."));
-    }
+    // Temporarily skip document verification checks
 
     return res
         .status(200)
