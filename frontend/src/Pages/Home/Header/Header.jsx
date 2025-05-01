@@ -39,21 +39,20 @@ function Header() {
 
   const handleDashboard = () => {
     try {
-      console.log('Current auth user:', auth.user); // Debug log
-
-      if (!auth.user || !auth.user._id) {
-        console.error('Invalid user data');
+      if (!auth?.user?._id) {
+        console.error('User not logged in or missing ID');
         return;
       }
 
       const userId = auth.user._id;
-      // Use type from auth context instead of role
-      if (auth.user.type === 'teacher') {
-        navigate(`/dashboard/teacher/${userId}/home`);
-      } else if (auth.user.type === 'student') {
-        navigate(`/dashboard/student/${userId}/search`);
+      const userType = auth.user.type || auth.user.role;
+
+      if (userType === 'teacher') {
+        navigate(`/dashboard/teacher/${userId}/home`); // Keep teacher navigation unchanged
+      } else if (userType === 'student') {
+        navigate(`/dashboard/student/${userId}/search`); // Update only student navigation
       } else {
-        console.error('Unknown user type:', auth.user.type);
+        console.error('Unknown user type:', userType);
       }
     } catch (error) {
       console.error('Dashboard navigation error:', error);
