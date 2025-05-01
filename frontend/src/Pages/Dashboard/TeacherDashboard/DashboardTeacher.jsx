@@ -80,7 +80,7 @@ function DashboardTeacher() {
         }
 
         const user = await response.json();
-        setAmount(user.data.newTeacher.Balance);
+        setAmount(user.data.newTeacher.balance);
       } catch (error) {
         console.log(error);
       }
