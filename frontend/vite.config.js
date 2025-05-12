@@ -73,13 +73,12 @@ export default defineConfig({
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
     sourcemap: true,
-    minify: 'esbuild',
-    rollupOptions: {
-      external: ['react-slick'],
+    minify: 'esbuild',    rollupOptions: {
+      external: ['react-slick', 'slick-carousel/slick/slick.css', 'slick-carousel/slick/slick-theme.css'],
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@material-tailwind/react', 'react-hot-toast', 'react-icons', 'react-slick'],
+          'ui-vendor': ['@material-tailwind/react', 'react-hot-toast', 'react-icons', 'react-slick', 'slick-carousel'],
           'utils-vendor': ['axios', 'date-fns']
         }
       }
