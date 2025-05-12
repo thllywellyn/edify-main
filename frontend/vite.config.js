@@ -12,7 +12,7 @@ export default defineConfig({
       }
     },
     host: true,
-    allowedHosts: ['edify.lsanalab.xyz', 'edify-main-frontend.up.railway.app'],
+    allowedHosts: ['edify.lsanalab.xyz', 'edify-main-frontend.up.railway.app', 'edify-main-trial.onrender.com'],
     open: false,
     port: process.env.PORT,
     fs: {
