@@ -14,7 +14,7 @@ export default defineConfig({
     host: true,
     allowedHosts: ['edify.lsanalab.xyz', 'edify-main-frontend.up.railway.app'],
     open: false,
-    port: 5173,
+    port: process.env.PORT,
     fs: {
       strict: false
     }
