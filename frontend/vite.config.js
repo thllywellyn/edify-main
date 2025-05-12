@@ -51,13 +51,6 @@ export default defineConfig({
       }
     })
   ],  build: {
-    sourcemap: true,
-    minify: 'esbuild'
-  },
-  optimizeDeps: {
-    force: true
-  },
-  esbuild: {
-    keepNames: true
+    sourcemap: true
   }
 })
