@@ -12,7 +12,6 @@ export default defineConfig({
       }
     },
     port: 5173,
-    open: true,
     host: true,
     fs: {
       strict: false // Allow serving files from outside the root directory
