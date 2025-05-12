@@ -4,16 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({  build: {
     outDir: 'dist',
-    emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-        }
-      }
-    }
+    emptyOutDir: true
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
@@ -31,14 +22,7 @@ export default defineConfig({  build: {
         secure: false
       }
     }
-  },  plugins: [
-    react({
-      jsxRuntime: 'automatic',
-      jsxImportSource: 'react',
-      babel: {
-        plugins: ['@babel/plugin-transform-react-jsx']
-      }
-    }),
+  },  plugins: [    react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
