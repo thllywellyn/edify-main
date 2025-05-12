@@ -13,6 +13,10 @@ export default defineConfig({
     },
     port: 5173,
     host: true,
+    allowedHosts: [
+      '*.railway.app',
+      '*.lsanalab.xyz'
+    ],
     fs: {
       strict: false // Allow serving files from outside the root directory
     }
