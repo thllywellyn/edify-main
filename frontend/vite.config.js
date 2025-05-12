@@ -2,38 +2,43 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
-  build: {
+export default defineConfig({  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: undefined
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
       }
     }
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+    esbuildOptions: {
+      target: 'es2020'
+    }
+  },
   server: {
+    port: 5173,
+    host: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false
       }
-    },
-    port: 5173,
-    host: true,
-    allowedHosts: [
-      'edify.lsanalab.xyz',
-      'edify-main-production.up.railway.app'
-    ],
-    fs: {
-      strict: false // Allow serving files from outside the root directory
-    },
-    hmr: {
-      overlay: false
-    },
-    open: false
-  },
-  plugins: [
-    react(),
+    }
+  },  plugins: [
+    react({
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react',
+      babel: {
+        plugins: ['@babel/plugin-transform-react-jsx']
+      }
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -62,7 +67,5 @@ export default defineConfig({
         orientation: 'portrait'
       }
     })
-  ],  build: {
-    sourcemap: true
-  }
+  ]
 })
