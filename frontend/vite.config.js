@@ -53,7 +53,7 @@ export default defineConfig({
       }
     })
   ],  build: {
-    sourcemap: false,
+    sourcemap: false, // Disable sourcemaps to save memory
     minify: 'esbuild',
     outDir: 'dist',
     emptyOutDir: true,
@@ -62,10 +62,8 @@ export default defineConfig({
     cssCodeSplit: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom', '@material-tailwind/react', 'react-hot-toast', 'react-icons', 'axios', 'date-fns']
-        },
-        inlineDynamicImports: true
+        inlineDynamicImports: true,
+        experimentalMinChunkSize: 10000
       }
     },
     target: 'es2018',
