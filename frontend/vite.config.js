@@ -12,10 +12,9 @@ export default defineConfig({
       }
     },
     port: 5173,
-    host: true,
-    allowedHosts: [
-      '*.railway.app',
-      '*.lsanalab.xyz'
+    host: true,    allowedHosts: [
+      'edify.lsanalab.xyz',
+      'edify-main-production.up.railway.app'
     ],
     fs: {
       strict: false // Allow serving files from outside the root directory
