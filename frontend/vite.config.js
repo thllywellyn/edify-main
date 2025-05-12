@@ -2,16 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({  build: {
+export default defineConfig({
+  build: {
     outDir: 'dist',
-    emptyOutDir: true
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom'],
-    esbuildOptions: {
-      target: 'es2020'
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['@material-tailwind/react', 'react-hot-toast', 'react-icons'],
+          'utils-vendor': ['axios', 'date-fns']
+        }
+      }
     }
-  },  server: {
+  },
+  server: {
     port: 5173,
     host: true,
     proxy: {
