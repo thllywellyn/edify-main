@@ -12,10 +12,7 @@ export default defineConfig({
       }
     },
     host: true,
-    allowedHosts: [
-      'edify.lsanalab.xyz',
-      'edify-main-frontend.up.railway.app'
-    ],
+    allowedHosts: ['edify.lsanalab.xyz', 'edify-main-frontend.up.railway.app'],
     open: false,
     port: 5173,
     fs: {
@@ -23,7 +20,10 @@ export default defineConfig({
     }
   },
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'classic', // avoid esbuild transform issues
+      babel: { presets: [] }
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -34,8 +34,6 @@ export default defineConfig({
         theme_color: '#4E84C1',
         background_color: '#042439',
         display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
         icons: [
           {
             src: '/src/Pages/Images/logo.svg',
@@ -49,25 +47,30 @@ export default defineConfig({
             type: 'image/svg+xml',
             purpose: 'any maskable'
           }
-        ]
+        ],
+        start_url: '/',
+        orientation: 'portrait'
       }
     })
   ],
   build: {
+    target: 'es2015',
+    minify: 'esbuild',
+    cssCodeSplit: false,
+    assetsInlineLimit: 2048,
     sourcemap: false,
-    minify: false,
     outDir: 'dist',
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1500,
-    assetsInlineLimit: 2048,
-    cssCodeSplit: false,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
         inlineDynamicImports: true
       }
-    },
-    target: 'esnext',
-    reportCompressedSize: false,
-    write: true
+    }
+  },
+  esbuild: {
+    legalComments: 'none',
+    treeShaking: true
   }
 })
