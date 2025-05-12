@@ -6,18 +6,18 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.BACKEND_URL || 'http://localhost:8000',
         changeOrigin: true,
         secure: false
       }
     },
-    host: true, allowedHosts: [
+    host: true,
+    allowedHosts: [
       'edify.lsanalab.xyz',
       'edify-main-frontend.up.railway.app'
     ],
     open: false,
     port: 5173,
-    host: true,
     fs: {
       strict: false // Allow serving files from outside the root directory
     }
@@ -52,9 +52,24 @@ export default defineConfig({
         orientation: 'portrait'
       }
     })
-  ],
-  build: {
-    sourcemap: true,
-    minify: 'esbuild'
+  ],  build: {
+    sourcemap: false,
+    minify: 'esbuild',
+    outDir: 'dist',
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
+    assetsInlineLimit: 4096,
+    cssCodeSplit: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom', '@material-tailwind/react', 'react-hot-toast', 'react-icons', 'axios', 'date-fns']
+        },
+        inlineDynamicImports: true
+      }
+    },
+    target: 'es2018',
+    reportCompressedSize: false,
+    write: true
   }
 })
