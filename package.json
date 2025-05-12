@@ -8,6 +8,7 @@
     "dev:frontend": "cd frontend && cross-env NODE_OPTIONS='--max-old-space-size=2048' vite",
     "dev:backend": "cd backend && nodemon -r dotenv/config --experimental-json-modules src/index.js",
     "build:frontend": "cd frontend && vite build",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "build": "cd frontend && npm install && vite build && cd ../backend && npm install",
     "start": "cd backend && node -r dotenv/config src/index.js",
     "lint": "cd frontend && eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
