@@ -19,7 +19,7 @@ export default defineConfig({
     open: false,
     port: 5173,
     fs: {
-      strict: false // Allow serving files from outside the root directory
+      strict: false
     }
   },
   plugins: [
@@ -34,6 +34,8 @@ export default defineConfig({
         theme_color: '#4E84C1',
         background_color: '#042439',
         display: 'standalone',
+        orientation: 'portrait',
+        start_url: '/',
         icons: [
           {
             src: '/src/Pages/Images/logo.svg',
@@ -47,26 +49,24 @@ export default defineConfig({
             type: 'image/svg+xml',
             purpose: 'any maskable'
           }
-        ],
-        start_url: '/',
-        orientation: 'portrait'
+        ]
       }
     })
-  ],  build: {
-    sourcemap: false, // Disable sourcemaps to save memory
-    minify: 'esbuild',
+  ],
+  build: {
+    sourcemap: false,
+    minify: false,
     outDir: 'dist',
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1000,
-    assetsInlineLimit: 4096,
+    chunkSizeWarningLimit: 1500,
+    assetsInlineLimit: 2048,
     cssCodeSplit: false,
     rollupOptions: {
       output: {
-        inlineDynamicImports: true,
-        experimentalMinChunkSize: 10000
+        inlineDynamicImports: true
       }
     },
-    target: 'es2018',
+    target: 'esnext',
     reportCompressedSize: false,
     write: true
   }
