@@ -3,23 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@material-tailwind/react', 'react-hot-toast', 'react-icons'],
-          'utils-vendor': ['axios', 'date-fns']
-        }
-      }
-    }
-  },
   server: {
-    port: 5173,
-    host: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
@@ -27,8 +11,16 @@ export default defineConfig({
         secure: false
       }
     },
+    port: 5173,
+    open: false,
+    host: true,
+    fs: {
+      strict: false
+    },
     allowedHosts: ['edify.lsanalab.xyz']
-  },  plugins: [    react(),
+  },
+  plugins: [
+    react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -57,5 +49,21 @@ export default defineConfig({
         orientation: 'portrait'
       }
     })
-  ]
+  ],
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
+    sourcemap: true,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['@material-tailwind/react', 'react-hot-toast', 'react-icons'],
+          'utils-vendor': ['axios', 'date-fns']
+        }
+      }
+    }
+  }
 })
