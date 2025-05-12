@@ -3,6 +3,13 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
+  },
   server: {
     proxy: {
       '/api': {
@@ -12,13 +19,18 @@ export default defineConfig({
       }
     },
     port: 5173,
-    host: true,    allowedHosts: [
+    host: true,
+    allowedHosts: [
       'edify.lsanalab.xyz',
       'edify-main-production.up.railway.app'
     ],
     fs: {
       strict: false // Allow serving files from outside the root directory
-    }
+    },
+    hmr: {
+      overlay: false
+    },
+    open: false
   },
   plugins: [
     react(),
