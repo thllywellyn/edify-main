@@ -1,13 +1,56 @@
 {
-  "dependencies": {
-    "concurrently": "^9.1.2",
-    "react-slick": "^0.30.3",
-    "slick-carousel": "^1.8.1"
-  },
+  "name": "edify",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "backend/src/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
-    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
-    "build": "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix backend && npm run build --prefix backend",
-    "start": "npm run start --prefix backend"
+    "dev:frontend": "cd frontend && vite",
+    "dev:backend": "cd backend && nodemon -r dotenv/config --experimental-json-modules src/index.js",
+    "build:frontend": "cd frontend && vite build",
+    "build": "cd frontend && npm install && vite build && cd ../backend && npm install",
+    "start": "cd backend && node -r dotenv/config src/index.js",
+    "lint": "cd frontend && eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@hapi/joi": "^17.1.1",
+    "@material-tailwind/react": "^2.1.9",
+    "axios": "^1.6.8",
+    "bcrypt": "^5.1.1",
+    "cloudinary": "^2.0.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.4",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.1.2",
+    "mongoose-aggregate-paginate-v2": "^1.0.7",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.9",
+    "razorpay": "^2.9.3",
+    "react": "^18.2.0",
+    "react-datepicker": "^7.1.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "react-icons": "^5.0.1",
+    "react-loader-spinner": "^6.1.6",
+    "react-router-dom": "^6.22.0",
+    "react-slick": "^0.30.3",
+    "slick-carousel": "^1.8.1",
+    "yup": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "nodemon": "^3.1.0",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.0.8"
   }
 }
