@@ -11,38 +11,22 @@ export default defineConfig({
         secure: false
       }
     },
-    port: 5173,
+    host: true, allowedHosts: [
+      'edify.lsanalab.xyz',
+      'edify-main-frontend.up.railway.app'
+    ],
     open: false,
+    port: 5173,
     host: true,
     fs: {
-      strict: false
-    },
-    allowedHosts: ['edify.lsanalab.xyz']
+      strict: false // Allow serving files from outside the root directory
+    }
   },
   plugins: [
-    react(),    VitePWA({
+    react(),
+    VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}'],
-        globDirectory: 'dist',
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      },
       manifest: {
         name: 'Edify',
         short_name: 'Edify',
@@ -68,20 +52,9 @@ export default defineConfig({
         orientation: 'portrait'
       }
     })
-  ],  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    chunkSizeWarningLimit: 1000,
+  ],
+  build: {
     sourcemap: true,
-    minify: 'esbuild',    rollupOptions: {
-      external: ['react-slick', 'slick-carousel/slick/slick.css', 'slick-carousel/slick/slick-theme.css'],
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@material-tailwind/react', 'react-hot-toast', 'react-icons', 'react-slick', 'slick-carousel'],
-          'utils-vendor': ['axios', 'date-fns']
-        }
-      }
-    }
+    minify: 'esbuild'
   }
 })
