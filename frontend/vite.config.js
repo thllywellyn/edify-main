@@ -50,9 +50,14 @@ export default defineConfig({
         orientation: 'portrait'
       }
     })
-  ],
-  build: {
+  ],  build: {
     sourcemap: true,
     minify: 'esbuild'
+  },
+  optimizeDeps: {
+    force: true
+  },
+  esbuild: {
+    keepNames: true
   }
 })
