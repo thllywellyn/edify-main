@@ -11,8 +11,7 @@ export default defineConfig({  build: {
     esbuildOptions: {
       target: 'es2020'
     }
-  },
-  server: {
+  },  server: {
     port: 5173,
     host: true,
     proxy: {
@@ -21,7 +20,8 @@ export default defineConfig({  build: {
         changeOrigin: true,
         secure: false
       }
-    }
+    },
+    allowedHosts: ['edify.lsanalab.xyz']
   },  plugins: [    react(),
     VitePWA({
       registerType: 'autoUpdate',
