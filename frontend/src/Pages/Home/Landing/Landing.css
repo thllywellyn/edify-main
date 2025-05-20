@@ -952,6 +952,109 @@ button:hover {
     }
 }
 
+/* Ensure all sections do not overflow and scale responsively */
+.top, .features, .faculty-list-container, .live-class, .E-mentor, .support-section, .courses, .content, .contact-us {
+  box-sizing: border-box;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.top .left, .top .right {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.features, .faculty-list-container, .live-class, .E-mentor, .support-section, .courses, .content, .contact-us {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Prevent text and images from overflowing cards */
+.fet, .faculty-card, .live-class-img, .e-img-container, .support-img {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.fet p, .faculty-card p, .live-class-text p, .e-text p, .support-text p {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Responsive image scaling */
+img, .fet-img img, .faculty-avatar, .live-class-img img, .e-img img, .support-img img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Responsive grid for faculty list */
+.faculty-list-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+/* Responsive for .subjects grid */
+.subjects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Prevent overflow in .content (contact section) */
+.content {
+  flex-wrap: wrap;
+  gap: 2rem;
+  max-width: 100vw;
+  overflow-x: auto;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 768px) {
+  .top, .features, .faculty-list-container, .live-class, .E-mentor, .support-section, .courses, .content, .contact-us {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    max-width: 100vw;
+  }
+  .faculty-list-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .subjects {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .top, .features, .faculty-list-container, .live-class, .E-mentor, .support-section, .courses, .content, .contact-us {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    max-width: 100vw;
+  }
+  .faculty-list-container {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .subjects {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
+
 /* Make images responsive throughout the page */
 img {
     max-width: 100%;
