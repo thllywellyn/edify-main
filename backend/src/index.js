@@ -9,8 +9,8 @@ console.log(`Database used currently : ${process.env.DB_NAME}`);
 
 db()
 .then(() => {
-    const server = app.listen(8000, () => {
-        console.log(`⚙️ Server is running at port : 8000`);
+    const server = app.listen(process.env.PORT || 8000, () => {
+        console.log(`⚙️ Server is running at port : ${process.env.PORT}`);
     });
 
     // Configure timeouts
