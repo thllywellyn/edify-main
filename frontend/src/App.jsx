@@ -30,54 +30,58 @@ import Forgetpassword from './Pages/ForgetPassword/Forgetpassword'
 import ResetPassword from './Pages/ForgetPassword/ResetPassword'
 import ResetTeacher from './Pages/ForgetPassword/ResetTeacher'
 import ProtectedRoute from './Pages/Components/ProtectedRoute'
+import PWAUpdateNotification from './Pages/Components/PWAUpdateNotification'
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/Signup" element={<Signup />} />
-        <Route path="/Search/:subject" element={<SearchData />} />
-        <Route path="/StudentDocument/:Data" element={<ProtectedRoute><StudentDocument /></ProtectedRoute>} />
-        <Route path="/courses" element={<Courses />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/varifyEmail" element={<VarifyEmail />} />
-        <Route path="/adminLogin" element={<AdminLogin />} />
-        <Route path="/rejected/:user/:ID" element={<Rejected />} />
-        <Route path="/pending" element={<Pending />} />
+    <>
+      <PWAUpdateNotification />
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/Signup" element={<Signup />} />
+          <Route path="/Search/:subject" element={<SearchData />} />
+          <Route path="/StudentDocument/:Data" element={<ProtectedRoute><StudentDocument /></ProtectedRoute>} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/varifyEmail" element={<VarifyEmail />} />
+          <Route path="/adminLogin" element={<AdminLogin />} />
+          <Route path="/rejected/:user/:ID" element={<Rejected />} />
+          <Route path="/pending" element={<Pending />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin/:data" element={<ProtectedRoute><Admin /></ProtectedRoute>}>
-          <Route index element={<AdminApprovals />} />
-          <Route path="courses" element={<AdminCourses />} />
+          {/* Admin Routes */}
+          <Route path="/admin/:data" element={<ProtectedRoute><Admin /></ProtectedRoute>}>
+            <Route index element={<AdminApprovals />} />
+            <Route path="courses" element={<AdminCourses />} />
+          </Route>
+          <Route path="/VarifyDoc/:type/:adminID/:ID" element={<ProtectedRoute><VarifyDoc /></ProtectedRoute>} />
+
+          {/* Student Dashboard */}
+          <Route path="/dashboard/student/:ID" element={<ProtectedRoute><StudentDashboardLayout /></ProtectedRoute>}>
+            <Route path="search" element={<SearchTeacher />} />
+            <Route path="classes" element={<StudentClasses />} />
+            <Route path="courses" element={<StudentCourses />} />
+          </Route>
+
+          {/* Teacher Dashboard */}
+          <Route path="/dashboard/teacher/:ID" element={<ProtectedRoute><TeacherDashboardLayout /></ProtectedRoute>}>
+            <Route path="home" element={<DashboardTeacher />} />
+            <Route path="classes" element={<TeacherClasses />} />
+            <Route path="courses" element={<TeacherCourses />} />
+          </Route>
+
+          {/* Password Reset Routes */}
+          <Route path="/forgetPassword" element={<Forgetpassword />} />
+          <Route path="/student/forgetPassword/:token" element={<ResetPassword />} />
+          <Route path="/teacher/forgetPassword/:token" element={<ResetTeacher />} />
+          
+          {/* 404 Route */}
+          <Route path="*" element={<ErrorPage />} />
         </Route>
-        <Route path="/VarifyDoc/:type/:adminID/:ID" element={<ProtectedRoute><VarifyDoc /></ProtectedRoute>} />
-
-        {/* Student Dashboard */}
-        <Route path="/dashboard/student/:ID" element={<ProtectedRoute><StudentDashboardLayout /></ProtectedRoute>}>
-          <Route path="search" element={<SearchTeacher />} />
-          <Route path="classes" element={<StudentClasses />} />
-          <Route path="courses" element={<StudentCourses />} />
-        </Route>
-
-        {/* Teacher Dashboard */}
-        <Route path="/dashboard/teacher/:ID" element={<ProtectedRoute><TeacherDashboardLayout /></ProtectedRoute>}>
-          <Route path="home" element={<DashboardTeacher />} />
-          <Route path="classes" element={<TeacherClasses />} />
-          <Route path="courses" element={<TeacherCourses />} />
-        </Route>
-
-        {/* Password Reset Routes */}
-        <Route path="/forgetPassword" element={<Forgetpassword />} />
-        <Route path="/student/forgetPassword/:token" element={<ResetPassword />} />
-        <Route path="/teacher/forgetPassword/:token" element={<ResetTeacher />} />
-        
-        {/* 404 Route */}
-        <Route path="*" element={<ErrorPage />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   )
 }
 
