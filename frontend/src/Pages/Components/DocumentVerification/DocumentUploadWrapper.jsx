@@ -15,7 +15,7 @@ const DocumentUploadWrapper = () => {
     const shouldShowForm = (
         (user.type === 'student' && !user.Studentdetails) ||
         (user.type === 'teacher' && !user.Teacherdetails) ||
-        ['pending', 'rejected'].includes(user.Isapproved) ||
+        ['pending', 'rejected', 'reupload'].includes(user.Isapproved) ||
         !user.Isapproved
     );
 

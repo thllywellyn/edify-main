@@ -210,7 +210,7 @@ const approveStudent = asyncHandler(async (req, res) => {
 
     const remarks = req.body.remarks || null;
 
-    if (!toApprove || (toApprove != "approved" && toApprove != "rejected" && toApprove !== "reupload")) {
+    if (!toApprove || !["approved", "rejected", "reupload"].includes(toApprove)) {
         throw new ApiError(400, "Please choose 'approve' or 'reject' or 'reupload'");
     }
 
