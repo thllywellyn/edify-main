@@ -44,6 +44,17 @@ function CommonDashboard({ userType }) {
 
   const needsDocuments = !user?.Studentdetails || ['pending', 'rejected', 'reupload'].includes(user?.Isapproved);
 
+  // Verify user type
+  const actualUserType = user?.type?.toLowerCase() || '';
+  const expectedUserType = userType.toLowerCase();
+
+  // Redirect if wrong dashboard type
+  useEffect(() => {
+    if (actualUserType && actualUserType !== expectedUserType) {
+      navigate(`/dashboard/${actualUserType}/${ID}/documents`);
+    }
+  }, [actualUserType, expectedUserType, ID, navigate]);
+
   // Custom function to determine which nav items to show
   const getNavItems = () => {
     const items = [];
@@ -57,14 +68,14 @@ function CommonDashboard({ userType }) {
     });
 
     // Role specific items
-    if (userType === 'Student') {
+    if (userType === 'Student' && actualUserType === 'student') {
       items.push({
         to: `/dashboard/student/${ID}/search`,
         icon: <FaUserGraduate className="h-4 w-4 mr-3" />,
         label: "Find Teachers",
         showWhen: "approved"
       });
-    } else {
+    } else if (userType === 'Teacher' && actualUserType === 'teacher') {
       items.push({
         to: `/dashboard/teacher/${ID}/home`,
         icon: <FaHome className="h-4 w-4 mr-3" />,

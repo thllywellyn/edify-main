@@ -8,7 +8,7 @@ import TeacherClasses from '../TeacherDashboard/TeacherClasses';
 function TeacherRoutes() {
   return (
     <Routes>
-      <Route path="documents" element={<DocumentUploadTab />} />
+      <Route path="documents" element={<DocumentUploadTab userType="Teacher" />} />
       <Route path="home" element={<DashboardTeacher />} />
       <Route path="courses" element={<TeacherCourses />} />
       <Route path="classes" element={<TeacherClasses />} />

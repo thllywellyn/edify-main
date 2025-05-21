@@ -20,7 +20,7 @@ function StudentRoutes() {
 
   return (
     <Routes>
-      <Route path="documents" element={<DocumentUploadTab />} />
+      <Route path="documents" element={<DocumentUploadTab userType="Student" />} />
       <Route path="home" element={<StudentDashboard />} />
       <Route path="search" element={<SearchTeacher />} />
       <Route path="courses" element={<StudentCourses />} />

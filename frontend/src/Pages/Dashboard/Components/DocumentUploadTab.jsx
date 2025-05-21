@@ -1,11 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useNavigate, useParams } from 'react-router-dom';
 import StudentDocument from '../../Components/DocumentVerification/StudentDocument';
 import TeacherDocument from '../../Components/DocumentVerification/TeacherDocument';
 import DashboardCard from './DashboardCard';
 
-function DocumentUploadTab() {
+function DocumentUploadTab({ userType }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { ID } = useParams();
+
+  const actualUserType = user?.type?.toLowerCase() || '';
+  const expectedUserType = userType?.toLowerCase() || '';
+
+  // Redirect if user type doesn't match the dashboard type
+  useEffect(() => {
+    if (actualUserType && actualUserType !== expectedUserType) {
+      navigate(`/dashboard/${actualUserType}/${ID}/documents`);
+    }
+  }, [actualUserType, expectedUserType, ID, navigate]);
 
   if (!user) return null;
 
@@ -45,6 +58,11 @@ function DocumentUploadTab() {
     }
   };
 
+  // Only render if user type matches the dashboard type
+  if (actualUserType !== expectedUserType) {
+    return null;
+  }
+
   return (
     <div className="space-y-6">
       <DashboardCard>
@@ -64,7 +82,7 @@ function DocumentUploadTab() {
       </DashboardCard>
 
       <div className="bg-[#042439] rounded-lg shadow-xl">
-        {user.type === 'student' ? <StudentDocument /> : <TeacherDocument />}
+        {actualUserType === 'student' ? <StudentDocument /> : <TeacherDocument />}
       </div>
     </div>
   );

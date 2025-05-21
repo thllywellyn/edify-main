@@ -1,12 +1,21 @@
 import React from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useParams, Navigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 
 const DashboardTabs = ({ userType }) => {
   const { ID } = useParams();
   const { user } = useAuth();
 
-  // Define tabs based on user type and approval status
+  // Verify that the current userType matches the user's actual type
+  const actualUserType = user?.type?.toLowerCase() || '';
+  const expectedUserType = userType.toLowerCase();
+  
+  // Redirect if user type doesn't match
+  if (actualUserType && actualUserType !== expectedUserType) {
+    return <Navigate to={`/dashboard/${actualUserType}/${ID}/documents`} replace />;
+  }
+
+  // Define tabs based on user type
   const studentTabs = [
     { label: 'Documents', to: `/dashboard/student/${ID}/documents`, visibleWhen: ['pending', 'rejected', 'reupload', 'none'] },
     { label: 'Home', to: `/dashboard/student/${ID}/home`, visibleWhen: ['approved'] },
@@ -21,10 +30,10 @@ const DashboardTabs = ({ userType }) => {
     { label: 'Classes', to: `/dashboard/teacher/${ID}/classes`, visibleWhen: ['approved'] },
   ];
 
-  const tabs = userType.toLowerCase() === 'student' ? studentTabs : teacherTabs;
+  const tabs = expectedUserType === 'student' ? studentTabs : teacherTabs;
   const approvalStatus = user?.Isapproved || 'none';
 
-  // Show tabs based on user's current approval status
+  // Show tabs based on user's current approval status and type
   const visibleTabs = tabs.filter(tab => tab.visibleWhen.includes(approvalStatus));
 
   return (
