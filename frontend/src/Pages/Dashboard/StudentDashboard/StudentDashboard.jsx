@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import ProfileCard from '../Components/ProfileCard';
-import DocumentUploadWrapper from '../../Components/DocumentVerification/DocumentUploadWrapper';
+import UnifiedDocumentUpload from '../../Components/DocumentUpload/UnifiedDocumentUpload';
 
 function StudentDashboard() {
   const { ID } = useParams();
@@ -55,7 +55,7 @@ function StudentDashboard() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Please complete your profile by uploading the required documents to access all features.
           </p>
-          <DocumentUploadWrapper />
+          <UnifiedDocumentUpload />
         </div>
       )}
     </div>
