@@ -81,9 +81,13 @@ function DocumentUploadTab({ userType }) {
         </div>
       </DashboardCard>
 
-      <div className="bg-[#042439] rounded-lg shadow-xl">
-        {actualUserType === 'student' ? <StudentDocument /> : <TeacherDocument />}
-      </div>
+      <DashboardCard>
+        {actualUserType === 'student' ? (
+          <StudentDocument userId={user._id} />
+        ) : (
+          <TeacherDocument userId={user._id} />
+        )}
+      </DashboardCard>
     </div>
   );
 }

@@ -3,14 +3,18 @@ import Input from "../DocumentVerification/InputComponent/Input.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import { RotatingLines } from "react-loader-spinner";
 import logo from "../../Images/logo.svg";
+import { useAuth } from "../../context/AuthContext";
 
-const StudentDocument = () => {
+const StudentDocument = ({ userId }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { Data } = useParams();
+  const documentId = userId || Data;  // Use passed userId or get from params
   const [data, setdata] = useState([]);
   const [error, setError] = useState("");
-  const { Data } = useParams();
-  const navigate = useNavigate();
   const [loader, setLoader] = useState(false);
   const [uploading, setUploading] = useState({});
+  
   const [formData, setFormData] = useState({
     Phone: "",
     Address: "",
@@ -26,13 +30,13 @@ const StudentDocument = () => {
 
   useEffect(() => {
     const getData = async () => {
-      if (!Data || Data === 'undefined') {
+      if (!documentId || documentId === 'undefined') {
         navigate('/login');
         return;
       }
 
       try {
-        const response = await fetch(`/api/student/StudentDocument/${Data}`, {
+        const response = await fetch(`/api/student/StudentDocument/${documentId}`, {
           credentials: 'include' // Include cookies in the request
         });
         
@@ -41,7 +45,10 @@ const StudentDocument = () => {
           return;
         }
         
-        if (!response.ok) throw new Error("Failed to fetch data");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch data");
+        }
         
         const user = await response.json();
         if (!user.data) {
@@ -118,9 +125,9 @@ const StudentDocument = () => {
     });
 
     try {
-      const response = await fetch(`/api/student/Verification/${Data}`, {
+      const response = await fetch(`/api/student/Verification/${documentId}`, {
         method: "POST",
-        credentials: 'include', // Include cookies in the request
+        credentials: 'include',
         body: formDataObj
       });
 
@@ -130,7 +137,12 @@ const StudentDocument = () => {
         throw new Error(responseData.message || "Failed to upload documents");
       }
       
-      navigate("/pending");
+      // Handle successful upload based on context
+      if (window.location.pathname.includes('/dashboard/')) {
+        window.location.reload(); // Reload dashboard to show updated status
+      } else {
+        navigate("/pending"); // Redirect to pending page for new uploads
+      }
     } catch (error) {
       setError(error.message);
     } finally {
