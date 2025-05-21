@@ -16,17 +16,52 @@ const TeacherDocument = ({ userId }) => {
 
   useEffect(() => {
     const getData = async () => {
+      if (!documentId || documentId === 'undefined') {
+        navigate('/login');
+        return;
+      }
+
       try {
-        const response = await fetch(`/api/teacher/TeacherDocument/${documentId}`);
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const user = await response.json();
-        setData(user.data);
-      } catch (error) {
-        setError(error.message);
+        setLoader(true);
+        const response = await fetch(`/api/teacher/TeacherDocument/${documentId}`, {
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+          const errorData = await response.json();
+          setError(errorData.message || "Authentication error");
+          if (response.status === 401) {
+            navigate('/login');
+            return;
+          }
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch data");
+        }
+
+        const responseData = await response.json();
+        setData(responseData.data);
+        if (responseData.data.documents) {
+          setFormData(prev => ({
+            ...prev,
+            ...responseData.data.documents
+          }));
+        }
+      } catch (err) {
+        setError(err.message || "Error loading document data");
+        console.error("Document fetch error:", err);
+      } finally {
+        setLoader(false);
       }
     };
+
     getData();
-  }, [documentId]);
+  }, [documentId, navigate]);
 
   const [formData, setFormData] = useState({
     Phone: "",
@@ -110,6 +145,7 @@ const TeacherDocument = ({ userId }) => {
     try {
       const response = await fetch(`/api/teacher/verification/${documentId}`, {
         method: "POST",
+        credentials: 'include',
         body: formDataObj
       });
 
@@ -119,7 +155,12 @@ const TeacherDocument = ({ userId }) => {
         throw new Error(responseData.message || "Failed to upload documents");
       }
       
-      navigate("/pending");
+      // Handle successful upload based on context
+      if (window.location.pathname.includes('/dashboard/')) {
+        window.location.reload(); // Reload dashboard to show updated status
+      } else {
+        navigate("/pending"); // Redirect to pending page for new uploads
+      }
     } catch (error) {
       setError(error.message);
     } finally {
