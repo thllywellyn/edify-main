@@ -43,7 +43,12 @@ const authSTD = asyncHandler(async (req, _, next) => {
         const isVerificationRoute = req.path.includes('/Verification/');
         const isDocumentUploadRoute = req.path.includes('/StudentDocument/');
 
-        // Only check approval status for non-verification routes
+        // If status is reupload, only allow access to document upload routes
+        if (Student.Isapproved === 'reupload' && !isDocumentUploadRoute) {
+            throw new ApiError(401, "Please reupload your documents. Visit the document verification page to continue.");
+        }
+        
+        // For other non-approved statuses, only allow access to verification and document upload routes
         if (!isVerificationRoute && !isDocumentUploadRoute && Student.Isapproved !== 'approved') {
             throw new ApiError(401, "Account not approved");
         }

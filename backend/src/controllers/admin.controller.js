@@ -214,7 +214,23 @@ const approveStudent = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Please choose 'approve' or 'reject' or 'reupload'");
     }
 
-    const theStudent = await student.findOneAndUpdate({ _id: studentID }, { $set: { Isapproved: toApprove, Remarks: remarks } }, { new: true });
+    // If status is being set to reupload, clear the existing documents
+    const updateQuery = { 
+        $set: { 
+            Isapproved: toApprove, 
+            Remarks: remarks 
+        }
+    };
+    
+    if (toApprove === 'reupload') {
+        updateQuery.$set.Studentdetails = null; // Clear existing documents
+    }
+
+    const theStudent = await student.findOneAndUpdate(
+        { _id: studentID }, 
+        updateQuery, 
+        { new: true }
+    );
 
     if (!theStudent) {
         throw new ApiError(400, "faild to approve or reject || student not found");
@@ -232,15 +248,51 @@ const approveStudent = asyncHandler(async (req, res) => {
 
     console.log("email", email);
 
-    await Sendmail(email, `Document Verification Status`,
+    const getStatusColor = (status) => {
+        switch(status) {
+            case 'approved': return '#4CAF50';
+            case 'rejected': return '#f44336';
+            case 'reupload': return '#ff9800';
+            default: return '#4E84C1';
+        }
+    };
+
+    const getStatusMessage = (status, remarks) => {
+        switch(status) {
+            case 'approved':
+                return `Congratulations! Your documents have been verified and approved. You can now proceed with using the platform.`;
+            case 'rejected':
+                return `We regret to inform you that your documents could not be verified at this time.${remarks ? ' Please review the remarks below and consider resubmitting your documents.' : ''} You can apply again by submitting new documents.`;
+            case 'reupload':
+                return `Action Required: We need you to resubmit your documents for verification.${remarks ? ' Please review the remarks below regarding what needs to be fixed.' : ''}\n\nPlease log into your account and visit the document verification section to upload the requested documents. Your access to certain features will be limited until new documents are approved.`;
+            default:
+                return `We have completed the verification process for the documents you submitted.`;
+        }
+    };
+
+    await Sendmail(email, `Document Verification Status Update - Action ${toApprove === 'reupload' ? 'Required' : 'Complete'}`,
         `<html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <h1 style="color: #4CAF50; text-align: center;">Document Verification Status!</h1>
-            <p style="font-size: 16px; text-align: center;">We have completed the verification process for the documents you submitted. Your document verification status is: ${toApprove}</p>
-            <p style="font-size: 16px;">Remarks: ${remarks}</p>
-            <p style="font-size: 16px;">Best regards,</p>
-            <p style="font-size: 16px;"><strong>The Edify Team</strong></p>
-            <p style="font-size: 14px;">&copy; 2024 Edify. All rights reserved.</p>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: ${getStatusColor(toApprove)}; margin: 0; padding: 20px 0;">Document Verification Update</h1>
+                    <div style="background-color: ${getStatusColor(toApprove)}; color: white; padding: 10px; border-radius: 5px; margin: 20px 0;">
+                        Status: ${toApprove === 'reupload' ? 'Action Required - Document Re-upload' : toApprove.charAt(0).toUpperCase() + toApprove.slice(1)}
+                    </div>
+                </div>
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                    <p style="font-size: 16px; margin-bottom: 20px;">Dear ${firstName || 'User'},</p>
+                    <p style="font-size: 16px; margin-bottom: 20px;">${getStatusMessage(toApprove, remarks)}</p>
+                    ${remarks ? `<div style="background-color: #fff; padding: 15px; border-left: 4px solid ${getStatusColor(toApprove)}; margin-bottom: 20px;">
+                        <strong>Remarks:</strong><br>
+                        ${remarks}
+                    </div>` : ''}
+                    <p style="font-size: 16px;">If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+                </div>
+                <div style="text-align: center; color: #666; border-top: 1px solid #eee; padding-top: 20px;">
+                    <p style="margin: 5px 0;">Best regards,</p>
+                    <p style="margin: 5px 0;"><strong>The Edify Team</strong></p>
+                    <p style="font-size: 12px; color: #999; margin-top: 20px;">&copy; ${new Date().getFullYear()} Edify. All rights reserved.</p>
+                </div>
             </body>
         </html>`
     );
