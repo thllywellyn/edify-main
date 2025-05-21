@@ -18,12 +18,8 @@ import AdminCourses from './Pages/Components/Admin/AdminCourses'
 import VarifyDoc from './Pages/Components/Admin/VarifyDoc'
 import StudentDashboardLayout from './Pages/Dashboard/Common/StudentDashboardLayout'
 import TeacherDashboardLayout from './Pages/Dashboard/Common/TeacherDashboardLayout'
-import SearchTeacher from './Pages/Dashboard/StudentDashboard/SearchTeacher'
-import StudentClasses from './Pages/Dashboard/StudentDashboard/StudentClasses'
-import StudentCourses from './Pages/Dashboard/StudentDashboard/StudentCourses'
-import DashboardTeacher from './Pages/Dashboard/TeacherDashboard/DashboardTeacher'
-import TeacherClasses from './Pages/Dashboard/TeacherDashboard/TeacherClasses'
-import TeacherCourses from './Pages/Dashboard/TeacherDashboard/TeacherCourses'
+import StudentRoutes from './Pages/Dashboard/Common/StudentRoutes'
+import TeacherRoutes from './Pages/Dashboard/Common/TeacherRoutes'
 import SearchData from './Pages/Home/Search/Search'
 import ErrorPage from './Pages/ErrorPage/ErrorPage'
 import Forgetpassword from './Pages/ForgetPassword/Forgetpassword'
@@ -42,7 +38,6 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/Signup" element={<Signup />} />
           <Route path="/Search/:subject" element={<SearchData />} />
-          <Route path="/StudentDocument/:Data" element={<ProtectedRoute><StudentDocument /></ProtectedRoute>} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
@@ -50,6 +45,7 @@ function App() {
           <Route path="/adminLogin" element={<AdminLogin />} />
           <Route path="/rejected/:user/:ID" element={<Rejected />} />
           <Route path="/pending" element={<Pending />} />
+          <Route path="/StudentDocument/:Data" element={<ProtectedRoute><StudentDocument /></ProtectedRoute>} />
 
           {/* Admin Routes */}
           <Route path="/admin/:data" element={<ProtectedRoute><Admin /></ProtectedRoute>}>
@@ -59,24 +55,20 @@ function App() {
           <Route path="/VarifyDoc/:type/:adminID/:ID" element={<ProtectedRoute><VarifyDoc /></ProtectedRoute>} />
 
           {/* Student Dashboard */}
-          <Route path="/dashboard/student/:ID" element={<ProtectedRoute><StudentDashboardLayout /></ProtectedRoute>}>
-            <Route path="search" element={<SearchTeacher />} />
-            <Route path="classes" element={<StudentClasses />} />
-            <Route path="courses" element={<StudentCourses />} />
+          <Route path="/dashboard/student/:ID/*" element={<ProtectedRoute><StudentDashboardLayout /></ProtectedRoute>}>
+            <Route path="*" element={<StudentRoutes />} />
           </Route>
 
           {/* Teacher Dashboard */}
-          <Route path="/dashboard/teacher/:ID" element={<ProtectedRoute><TeacherDashboardLayout /></ProtectedRoute>}>
-            <Route path="home" element={<DashboardTeacher />} />
-            <Route path="classes" element={<TeacherClasses />} />
-            <Route path="courses" element={<TeacherCourses />} />
+          <Route path="/dashboard/teacher/:ID/*" element={<ProtectedRoute><TeacherDashboardLayout /></ProtectedRoute>}>
+            <Route path="*" element={<TeacherRoutes />} />
           </Route>
 
           {/* Password Reset Routes */}
           <Route path="/forgetPassword" element={<Forgetpassword />} />
           <Route path="/student/forgetPassword/:token" element={<ResetPassword />} />
           <Route path="/teacher/forgetPassword/:token" element={<ResetTeacher />} />
-          
+
           {/* 404 Route */}
           <Route path="*" element={<ErrorPage />} />
         </Route>

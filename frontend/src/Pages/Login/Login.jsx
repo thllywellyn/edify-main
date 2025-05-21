@@ -89,18 +89,9 @@ export default function Login() {
           return;
         }
 
-        if (!studentData.Studentdetails) {
-          navigate(`/StudentDocument/${studentData._id}`);
-          return;
-        }
-
-        if (studentData.Isapproved === 'pending') {
-          navigate('/pending');
-          return;
-        }
-
-        if (studentData.Isapproved === 'rejected') {
-          navigate(`/rejected/${studentData._id}/student`);
+        if (!studentData.Studentdetails || 
+            ['pending', 'rejected', 'reupload'].includes(studentData.Isapproved)) {
+          navigate(`/dashboard/student/${studentData._id}/documents`);
           return;
         }
 
