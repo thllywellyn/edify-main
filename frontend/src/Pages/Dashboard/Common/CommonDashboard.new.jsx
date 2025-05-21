@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useParams, useNavigate, Outlet } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
-import { FaSun, FaMoon, FaHome, FaBook, FaCalendarAlt, FaUserGraduate, FaUserCircle, FaBell } from 'react-icons/fa';
+import { FaSun, FaMoon, FaHome, FaBook, FaCalendarAlt, FaUserGraduate, FaUserCircle, FaBell, FaFileAlt } from 'react-icons/fa';
 import { RiMenu4Fill, RiCloseLine } from 'react-icons/ri';
 import logo from '../../Images/logo.svg';
 import NotificationDropdown from '../Components/NotificationDropdown';
@@ -41,6 +41,70 @@ function CommonDashboard({ userType }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const needsDocuments = !user?.Studentdetails || ['pending', 'rejected', 'reupload'].includes(user?.Isapproved);
+
+  // Custom function to determine which nav items to show
+  const getNavItems = () => {
+    const items = [];
+
+    // Always show Home
+    items.push({
+      to: "/",
+      icon: <FaHome className="h-4 w-4 mr-3" />,
+      label: "Home",
+      showWhen: "always"
+    });
+
+    // Role specific items
+    if (userType === 'Student') {
+      items.push({
+        to: `/dashboard/student/${ID}/search`,
+        icon: <FaUserGraduate className="h-4 w-4 mr-3" />,
+        label: "Find Teachers",
+        showWhen: "approved"
+      });
+    } else {
+      items.push({
+        to: `/dashboard/teacher/${ID}/home`,
+        icon: <FaHome className="h-4 w-4 mr-3" />,
+        label: "Dashboard",
+        showWhen: "approved"
+      });
+    }
+
+    // Common items for approved users
+    if (user?.Isapproved === 'approved') {
+      items.push(
+        {
+          to: `/dashboard/${userType.toLowerCase()}/${ID}/classes`,
+          icon: <FaCalendarAlt className="h-4 w-4 mr-3" />,
+          label: "Classes",
+          showWhen: "approved"
+        },
+        {
+          to: `/dashboard/${userType.toLowerCase()}/${ID}/courses`,
+          icon: <FaBook className="h-4 w-4 mr-3" />,
+          label: "Courses",
+          showWhen: "approved"
+        }
+      );
+    }
+
+    // Show Documents link when not approved or needs documents
+    if (needsDocuments) {
+      items.push({
+        to: `/dashboard/${userType.toLowerCase()}/${ID}/documents`,
+        icon: <FaFileAlt className="h-4 w-4 mr-3" />,
+        label: "Documents",
+        showWhen: "not-approved"
+      });
+    }
+
+    return items;
+  };
+
+  const navItems = getNavItems();
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-[#031c2e]">
@@ -84,18 +148,10 @@ function CommonDashboard({ userType }) {
 
           {/* Navigation Links */}
           <nav className="flex-1 px-4 pt-4 space-y-2 overflow-y-auto">
-            <NavLink 
-              to="/"
-              className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439] transition-colors"
-            >
-              <FaHome className="h-4 w-4 mr-3" />
-              Home
-            </NavLink>
-
-            {/* Role-specific links */}
-            {userType === 'Student' ? (
+            {navItems.map((item) => (
               <NavLink 
-                to={`/dashboard/student/${ID}/search`}
+                key={item.to}
+                to={item.to}
                 className={({isActive}) => 
                   `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                     isActive 
@@ -104,74 +160,10 @@ function CommonDashboard({ userType }) {
                   } transition-colors`
                 }
               >
-                <FaUserGraduate className="h-4 w-4 mr-3" />
-                Find Teachers
+                {item.icon}
+                {item.label}
               </NavLink>
-            ) : (
-              <NavLink 
-                to={`/dashboard/teacher/${ID}/home`}
-                className={({isActive}) => 
-                  `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    isActive 
-                      ? "bg-[#4E84C1] text-white" 
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
-                  } transition-colors`
-                }
-              >
-                <FaHome className="h-4 w-4 mr-3" />
-                Dashboard
-              </NavLink>
-            )}
-
-            {/* Common links */}
-            {user?.Isapproved === 'approved' && (
-              <>
-                <NavLink 
-                  to={`/dashboard/${userType.toLowerCase()}/${ID}/classes`}
-                  className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive 
-                        ? "bg-[#4E84C1] text-white" 
-                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
-                    } transition-colors`
-                  }
-                >
-                  <FaCalendarAlt className="h-4 w-4 mr-3" />
-                  Classes
-                </NavLink>
-
-                <NavLink 
-                  to={`/dashboard/${userType.toLowerCase()}/${ID}/courses`}
-                  className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive 
-                        ? "bg-[#4E84C1] text-white" 
-                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
-                    } transition-colors`
-                  }
-                >
-                  <FaBook className="h-4 w-4 mr-3" />
-                  Courses
-                </NavLink>
-              </>
-            )}
-
-            {/* Document Upload Link - Always visible if not approved */}
-            {user?.Isapproved !== 'approved' && (
-              <NavLink 
-                to={`/dashboard/${userType.toLowerCase()}/${ID}/documents`}
-                className={({isActive}) => 
-                  `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    isActive 
-                      ? "bg-[#4E84C1] text-white" 
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
-                  } transition-colors`
-                }
-              >
-                <FaBook className="h-4 w-4 mr-3" />
-                Documents
-              </NavLink>
-            )}
+            ))}
           </nav>
 
           {/* Bottom Actions */}

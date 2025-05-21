@@ -39,18 +39,25 @@ const authSTD = asyncHandler(async (req, _, next) => {
             throw new ApiError(401, "Email not verified");
         }
 
-        // Check if this is a verification-related route
+        // Define allowed routes for non-approved users
         const isVerificationRoute = req.path.includes('/Verification/');
-        const isDocumentUploadRoute = req.path.includes('/StudentDocument/');
+        const isDocumentUploadRoute = req.path.includes('/StudentDocument/') || req.path.includes('/dashboard/student/') && req.path.includes('/documents');
+        const isAllowedRoute = isVerificationRoute || isDocumentUploadRoute;
 
-        // If status is reupload, only allow access to document upload routes
-        if (Student.Isapproved === 'reupload' && !isDocumentUploadRoute) {
-            throw new ApiError(401, "Please reupload your documents. Visit the document verification page to continue.");
+        // Handle re-upload and other non-approved states
+        if (Student.Isapproved === 'reupload' && !isAllowedRoute) {
+            throw new ApiError(401, "Your documents need to be re-uploaded. Please visit your dashboard to complete this process.");
         }
         
-        // For other non-approved statuses, only allow access to verification and document upload routes
-        if (!isVerificationRoute && !isDocumentUploadRoute && Student.Isapproved !== 'approved') {
-            throw new ApiError(401, "Account not approved");
+        // For other non-approved statuses
+        if (Student.Isapproved !== 'approved' && !isAllowedRoute) {
+            if (Student.Isapproved === 'pending') {
+                throw new ApiError(401, "Your documents are under review. Please wait for approval.");
+            } else if (Student.Isapproved === 'rejected') {
+                throw new ApiError(401, "Your documents were rejected. Please check the remarks and resubmit.");
+            } else {
+                throw new ApiError(401, "Account not approved. Please complete document verification.");
+            }
         }
 
         req.Student = Student;
