@@ -1,63 +1,49 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Input from "../DocumentVerification/InputComponent/Input.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import { RotatingLines } from "react-loader-spinner";
 import logo from "../../Images/logo.svg";
 
-const StudentDocument = () => {
-  const [data, setdata] = useState([]);
+const TeacherDocument = () => {
+  const [data, setData] = useState({});
   const [error, setError] = useState("");
   const { Data } = useParams();
   const navigate = useNavigate();
   const [loader, setLoader] = useState(false);
   const [uploading, setUploading] = useState({});
-  const [formData, setFormData] = useState({
-    Phone: "",
-    Address: "",
-    Highesteducation: "",
-    SecondarySchool: "",
-    HigherSchool: "",
-    SecondaryMarks: "",
-    HigherMarks: "",
-    Aadhaar: null,
-    Secondary: null,
-    Higher: null,
-  });
 
   useEffect(() => {
     const getData = async () => {
-      if (!Data || Data === 'undefined') {
-        navigate('/login');
-        return;
-      }
-
       try {
-        const response = await fetch(`/api/student/StudentDocument/${Data}`, {
-          credentials: 'include' // Include cookies in the request
-        });
-        
-        if (response.status === 401) {
-          navigate('/login');
-          return;
-        }
-        
+        const response = await fetch(`/api/teacher/TeacherDocument/${Data}`);
         if (!response.ok) throw new Error("Failed to fetch data");
-        
         const user = await response.json();
-        if (!user.data) {
-          throw new Error("No user data found");
-        }
-        
-        setdata(user.data);
+        setData(user.data);
       } catch (error) {
         setError(error.message);
-        if (error.message.includes("Failed to fetch") || error.message.includes("No user data")) {
-          navigate('/login');
-        }
       }
     };
     getData();
-  }, [Data, navigate]);
+  }, [Data]);
+
+  const [formData, setFormData] = useState({
+    Phone: "",
+    Address: "",
+    Experience: "",
+    SecondarySchool: "",
+    SecondaryMarks: "",
+    HigherSchool: "",
+    HigherMarks: "",
+    UGcollege: "",
+    UGmarks: "",
+    PGcollege: "",
+    PGmarks: "",
+    Aadhaar: null,
+    Secondary: null,
+    Higher: null,
+    UG: null,
+    PG: null,
+  });
 
   const handleFileChange = async (fileType, e) => {
     const file = e.target.files[0];
@@ -93,9 +79,11 @@ const StudentDocument = () => {
 
     // Validate required fields
     const requiredFields = [
-      'Phone', 'Address', 'Highesteducation', 
-      'SecondarySchool', 'HigherSchool', 
-      'SecondaryMarks', 'HigherMarks'
+      'Phone', 'Address', 'Experience', 
+      'SecondarySchool', 'SecondaryMarks', 
+      'HigherSchool', 'HigherMarks',
+      'UGcollege', 'UGmarks',
+      'PGcollege', 'PGmarks'
     ];
     
     const missingFields = requiredFields.filter(field => !formData[field]);
@@ -106,7 +94,7 @@ const StudentDocument = () => {
     }
 
     // Validate documents
-    if (!formData.Aadhaar || !formData.Secondary || !formData.Higher) {
+    if (!formData.Aadhaar || !formData.Secondary || !formData.Higher || !formData.UG || !formData.PG) {
       setError("Please upload all required documents");
       setLoader(false);
       return;
@@ -118,9 +106,8 @@ const StudentDocument = () => {
     });
 
     try {
-      const response = await fetch(`/api/student/Verification/${Data}`, {
+      const response = await fetch(`/api/teacher/verification/${Data}`, {
         method: "POST",
-        credentials: 'include', // Include cookies in the request
         body: formDataObj
       });
 
@@ -159,7 +146,7 @@ const StudentDocument = () => {
           <img src={logo} className="w-12" alt="Edify Logo" />
           <h1 className="text-2xl text-[#4E84C1] font-bold">Edify</h1>
         </div>
-        <h2 className="text-white text-xl">Document Verification</h2>
+        <h2 className="text-white text-xl">Document Verification (Teacher)</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-5xl mx-auto p-6 space-y-8">
@@ -187,9 +174,11 @@ const StudentDocument = () => {
               required
             />
             <Input
-              label="Highest Education"
-              value={formData.Highesteducation}
-              onChange={(e) => handleInputChange("Highesteducation", e.target.value)}
+              label="Teaching Experience (years)"
+              type="number"
+              min="0"
+              value={formData.Experience}
+              onChange={(e) => handleInputChange("Experience", e.target.value)}
               required
             />
             <div className="md:col-span-2">
@@ -327,6 +316,100 @@ const StudentDocument = () => {
                 </div>
               </div>
             </div>
+
+            {/* Graduation */}
+            <div className="p-6 border border-gray-700 rounded-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-[#0D286F] p-2 rounded">
+                  <span className="text-white text-sm">Graduation</span>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Input
+                  placeholder="University Name"
+                  value={formData.UGcollege}
+                  onChange={(e) => handleInputChange("UGcollege", e.target.value)}
+                  required
+                />
+                <Input
+                  placeholder="CGPA (out of 10)"
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.01"
+                  value={formData.UGmarks}
+                  onChange={(e) => handleInputChange("UGmarks", e.target.value)}
+                  required
+                />
+                <div className="md:col-span-2">
+                  <input
+                    type="file"
+                    onChange={(e) => handleFileChange("UG", e)}
+                    className="hidden"
+                    id="ug-upload"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                  />
+                  <label
+                    htmlFor="ug-upload"
+                    className="w-full px-4 py-3 border border-gray-300 border-dashed rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:border-[#4E84C1] transition-colors"
+                  >
+                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span className="text-gray-300">
+                      {formData.UG ? formData.UG.name : "Upload Graduation Certificate"}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Post Graduation */}
+            <div className="p-6 border border-gray-700 rounded-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-[#0D286F] p-2 rounded">
+                  <span className="text-white text-sm">Post Graduation</span>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Input
+                  placeholder="University Name"
+                  value={formData.PGcollege}
+                  onChange={(e) => handleInputChange("PGcollege", e.target.value)}
+                  required
+                />
+                <Input
+                  placeholder="CGPA (out of 10)"
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.01"
+                  value={formData.PGmarks}
+                  onChange={(e) => handleInputChange("PGmarks", e.target.value)}
+                  required
+                />
+                <div className="md:col-span-2">
+                  <input
+                    type="file"
+                    onChange={(e) => handleFileChange("PG", e)}
+                    className="hidden"
+                    id="pg-upload"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                  />
+                  <label
+                    htmlFor="pg-upload"
+                    className="w-full px-4 py-3 border border-gray-300 border-dashed rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:border-[#4E84C1] transition-colors"
+                  >
+                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span className="text-gray-300">
+                      {formData.PG ? formData.PG.name : "Upload Post Graduation Certificate"}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -367,4 +450,4 @@ const StudentDocument = () => {
   );
 };
 
-export default StudentDocument;
+export default TeacherDocument;

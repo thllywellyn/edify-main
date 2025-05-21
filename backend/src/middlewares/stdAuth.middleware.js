@@ -39,27 +39,16 @@ const authSTD = asyncHandler(async (req, _, next) => {
             throw new ApiError(401, "Email not verified");
         }
 
-        // Define allowed routes for non-approved users
+        // Check if this is a verification-related route
         const isVerificationRoute = req.path.includes('/Verification/');
-        const isDocumentRoute = req.path.includes('/StudentDocument/') || 
-            req.path.includes('/dashboard/student/documents') || 
-            req.path.includes('/api/student/document/') ||
-            req.path.includes('/api/student/verification/');
-        const isAllowedRoute = isVerificationRoute || isDocumentRoute;
+        const isDocumentUploadRoute = req.path.includes('/StudentDocument/');
 
-        // Set student info in request
+        // Only check approval status for non-verification routes
+        if (!isVerificationRoute && !isDocumentUploadRoute && Student.Isapproved !== 'approved') {
+            throw new ApiError(401, "Account not approved");
+        }
+
         req.Student = Student;
-
-        // Allow document routes for all states
-        if (isAllowedRoute) {
-            return next();
-        }
-
-        // Handle document states
-        if (!Student.Isapproved || ['pending', 'rejected', 'reupload'].includes(Student.Isapproved)) {
-            throw new ApiError(403, `Please complete your document verification. Current status: ${Student.Isapproved || 'not submitted'}`);
-        }
-
         next();
     } catch (error) {
         next(error);

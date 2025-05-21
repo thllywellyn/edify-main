@@ -10,7 +10,6 @@ const VarifyDoc = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [remarks, setRemarks] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,8 +54,7 @@ const VarifyDoc = () => {
         body: JSON.stringify({ 
           Isapproved: action,
           email: email,
-          Firstname: firstName,
-          remarks: remarks 
+          Firstname: firstName 
         }),
       });
       
@@ -81,102 +79,33 @@ const VarifyDoc = () => {
     
     const documentUrls = [];
     
-    // Common Documents
-    const commonDocs = [
-      { key: 'Aadhaar', name: 'Aadhaar Card' },
-      { key: 'Secondary', name: '10th Certificate' },
-      { key: 'Higher', name: '12th Certificate' }
-    ];
-
-    commonDocs.forEach(doc => {
-      if (docs[doc.key]) {
-        documentUrls.push({ name: doc.name, url: docs[doc.key] });
-      }
-    });
+    // Add Aadhaar card
+    if (docs.Aadhaar) {
+      documentUrls.push({ name: 'Aadhaar Card', url: docs.Aadhaar });
+    }
     
-    // Teacher-specific documents
+    // Add Secondary/10th certificate
+    if (docs.Secondary) {
+      documentUrls.push({ name: '10th Certificate', url: docs.Secondary });
+    }
+    
+    // Add Higher/12th certificate
+    if (docs.Higher) {
+      documentUrls.push({ name: '12th Certificate', url: docs.Higher });
+    }
+    
+    // For teachers, add undergraduate and postgraduate certificates
     if (type === 'teacher') {
-      const teacherDocs = [
-        { key: 'UG', name: 'Graduation Certificate' },
-        { key: 'PG', name: 'Post Graduation Certificate' }
-      ];
-
-      teacherDocs.forEach(doc => {
-        if (docs[doc.key]) {
-          documentUrls.push({ name: doc.name, url: docs[doc.key] });
-        }
-      });
+      if (docs.UG) {
+        documentUrls.push({ name: 'Graduation Certificate', url: docs.UG });
+      }
+      
+      if (docs.PG) {
+        documentUrls.push({ name: 'Post Graduation Certificate', url: docs.PG });
+      }
     }
     
     return documentUrls;
-  };
-
-  const renderVerificationButtons = () => (
-    <div className="flex gap-4 justify-end mt-6">
-      <button
-        onClick={() => handleAction('approved')}
-        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-      >
-        Approve
-      </button>
-      <button
-        onClick={() => handleAction('rejected')}
-        className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-      >
-        Reject
-      </button>
-      <button
-        onClick={() => handleAction('reupload')}
-        className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-      >
-        Request Re-upload
-      </button>
-    </div>
-  );
-
-  const renderDocumentList = () => {
-    const documents = getDocumentURLs();
-    
-    if (documents.length === 0) {
-      return (
-        <div className="text-center py-8 text-gray-400">
-          No documents available for verification
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid md:grid-cols-2 gap-6">
-        {documents.map((doc, index) => (
-          <div key={index} className="bg-gray-800/50 p-4 rounded-lg">
-            <h3 className="text-[#4E84C1] font-medium mb-2">{doc.name}</h3>
-            <div className="aspect-video relative">
-              {doc.url.endsWith('.pdf') ? (
-                <iframe
-                  src={doc.url}
-                  className="w-full h-full rounded border border-gray-700"
-                  title={doc.name}
-                />
-              ) : (
-                <img
-                  src={doc.url}
-                  alt={doc.name}
-                  className="w-full h-full object-contain rounded"
-                />
-              )}
-            </div>
-            <a
-              href={doc.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 text-sm text-[#4E84C1] hover:underline inline-block"
-            >
-              View Full Document
-            </a>
-          </div>
-        ))}
-      </div>
-    );
   };
 
   const userData = type === 'student' ? data?.theStudent : data?.theTeacher;
@@ -305,18 +234,6 @@ const VarifyDoc = () => {
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Remarks */}
-              <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 shadow-xl">
-                <h3 className="text-xl font-semibold text-[#4E84C1] mb-4">Remarks</h3>
-                <textarea
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  placeholder="Enter any remarks or feedback about the documents..."
-                  className="w-full p-4 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-[#4E84C1] focus:border-transparent text-gray-200"
-                  rows="4"
-                />
               </div>
 
               {/* Actions */}

@@ -85,19 +85,18 @@ export function AuthProvider({ children }) {
             setUser(userData);
             if (userType === 'teacher') {
                 // For teachers, directly navigate to their dashboard
-                navigate(`/dashboard/teacher/${userData._id}/home`);            } else if (userType === 'student') {
-                // Verification status check
+                navigate(`/dashboard/teacher/${userData._id}/home`);
+            } else if (userType === 'student') {
+                // Add safety check for Isverified property
                 if (userData && userData.Isverified === false) {
                     navigate('/verify-email');
                     return;
                 }
-                // Document verification check
-                if (!userData.Studentdetails || ['pending', 'rejected', 'reupload'].includes(userData.Isapproved)) {
-                    navigate(`/dashboard/student/${userData._id}/documents`);
+                if (!userData || !userData.Studentdocs) {
+                    navigate(`/StudentDocument/${userData._id}`);
                     return;
                 }
-                // Navigate to search page for approved students
-                navigate(`/dashboard/student/${userData._id}/search`);
+                navigate('/student/dashboard');
             }
             
             const userWithType = { ...userData, type: userType };

@@ -158,7 +158,7 @@ const mailVerified = asyncHandler(async(req,res)=>{
         <h1 style="font-size: 36px; font-weight: bold; padding: 20px;">Email Verified Successfully!</h1>
         <h4 style="margin-bottom: 20px;">Your email address was successfully verified.</h4>
         <p style="margin-bottom: 20px; color: #666;">Please complete your profile by uploading the required documents.</p>
-        <button onclick="window.location.href='${process.env.FRONTEND_URL}/dashboard/student/${id}/documents'" 
+        <button onclick="window.location.href='${process.env.FRONTEND_URL}/StudentDocument/${id}'" 
                 style="background-color: #4E84C1; color: white; padding: 12px 24px; border: none; border-radius: 6px; 
                        font-size: 16px; cursor: pointer; transition: background-color 0.3s;">
             Continue to Document Upload
@@ -307,44 +307,49 @@ const getStudent = asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200, user, "Student is logged in"))
 })
-const addStudentDetails = asyncHandler(async(req, res) => {
-    const id = req.params.id;
+const addStudentDetails = asyncHandler(async(req, res)=>{
+
+    const id = req.params.id
     if(req.Student._id != id){
-        throw new ApiError(400, "unauthorized access");
+        throw new ApiError(400,"not authorized ")
     }
 
-    const {
-        Phone, Address, Highesteducation, 
-        SecondarySchool, HigherSchool, 
-        SecondaryMarks, HigherMarks
-    } = req.body;
+    const {Phone, Address, Highesteducation, SecondarySchool, HigherSchool, SecondaryMarks, HigherMarks}  = req.body
 
-    if ([Phone, Address, Highesteducation, SecondarySchool, HigherSchool, SecondaryMarks, HigherMarks]
-        .some((field) => !field || field?.trim() === "")) {
+    if ([Phone, Address, Highesteducation, SecondarySchool, HigherSchool, SecondaryMarks, HigherMarks].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
+    const alreadyExist = await studentdocs.findOne({Phone})
+
+    if(alreadyExist){
+        throw new ApiError(400, "phone number already exists")
+    }
+
     const AadhaarLocalPath = req.files?.Aadhaar?.[0]?.path;
+
     const SecondaryLocalPath = req.files?.Secondary?.[0]?.path;
-    const HigherLocalPath = req.files?.Higher?.[0]?.path;
 
-    if(!AadhaarLocalPath || !SecondaryLocalPath || !HigherLocalPath){
-        throw new ApiError(400, "All documents are required");
+    const HigherLocalPath = req.files?.Higher?.[0]?.path
+
+    if(!AadhaarLocalPath){
+        throw new ApiError(400, "Aadhaar is required")
     }
 
-    // Upload to cloudinary
-    const [Aadhaar, Secondary, Higher] = await Promise.all([
-        uploadOnCloudinary(AadhaarLocalPath),
-        uploadOnCloudinary(SecondaryLocalPath),
-        uploadOnCloudinary(HigherLocalPath)
-    ]);
-
-    if(!Aadhaar || !Secondary || !Higher) {
-        throw new ApiError(500, "Error while uploading documents");
+    if(!SecondaryLocalPath){
+        throw new ApiError(400, "Secondary marksheet is required")
     }
 
-    // Create or update student documents
-    const documentData = {
+    if(!HigherLocalPath){
+        throw new ApiError(400, "Higher marksheet is required")
+    }
+
+    const Aadhaar = await uploadOnCloudinary(AadhaarLocalPath)
+    const Secondary = await uploadOnCloudinary(SecondaryLocalPath)
+
+    const Higher = await uploadOnCloudinary(HigherLocalPath)
+
+    const studentdetails = await studentdocs.create({
         Phone,
         Address,
         Highesteducation,
@@ -354,41 +359,23 @@ const addStudentDetails = asyncHandler(async(req, res) => {
         HigherMarks,
         Aadhaar: Aadhaar.url,
         Secondary: Secondary.url,
-        Higher: Higher.url
-    };
+        Higher: Higher.url,
+    })
 
-    let studentDocs;
-    if (req.Student.Studentdetails) {
-        // Update existing documents
-        studentDocs = await studentdocs.findByIdAndUpdate(
-            req.Student.Studentdetails,
-            documentData,
-            { new: true }
-        );
-    } else {
-        // Create new documents
-        studentDocs = await studentdocs.create(documentData);
-    }
 
-    // Update student status
-    const theStudent = await student.findOneAndUpdate(
-        {_id: id},
-        {
-            $set: {
-                Isapproved: "pending",
-                Studentdetails: studentDocs._id
-            }
-        },
-        { new: true }
-    ).select("-Password -Refreshtoken");
+    //const loggedstd = await student.findByIdAndUpdate(id, {})
+
+    const theStudent = await student.findOneAndUpdate({_id: id}, {$set: {Isapproved:"pending", Studentdetails: studentdetails._id}},  { new: true }).select("-Password -Refreshtoken")
+    
     
     if(!theStudent){
-        throw new ApiError(400, "Failed to update student information");
+        throw new ApiError(400,"faild to approve or reject || student not found")
     }
 
     return res
-        .status(200)
-        .json(new ApiResponse(200, theStudent, "Documents uploaded successfully"));
+    .status(200)
+    .json(new ApiResponse(200, theStudent, "documents uploaded successfully"))
+
 })
 
 
