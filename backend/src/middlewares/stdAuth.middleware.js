@@ -43,7 +43,8 @@ const authSTD = asyncHandler(async (req, _, next) => {
         const isVerificationRoute = req.path.includes('/Verification/');
         const isDocumentRoute = req.path.includes('/StudentDocument/') || 
             req.path.includes('/dashboard/student/documents') || 
-            req.path.includes('/api/student/document/');
+            req.path.includes('/api/student/document/') ||
+            req.path.includes('/api/student/verification/');
         const isAllowedRoute = isVerificationRoute || isDocumentRoute;
 
         // Set student info in request
