@@ -42,18 +42,22 @@ function CommonDashboard({ userType }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
   useEffect(() => {
     const fetchUserData = async () => {
       setIsLoading(true);
       setError(null);
       
       try {
-        // Try to use the user data from AuthContext if available
+        // Use user data from AuthContext if available
         if (user && user._id === ID) {
-          console.log("Using data from AuthContext");
           setUserData(user);
           setIsLoading(false);
+          return;
+        }
+        
+        // If user type doesn't match, redirect to correct dashboard
+        if (user && user.type?.toLowerCase() !== userType.toLowerCase()) {
+          navigate(`/dashboard/${user.type.toLowerCase()}/${user._id}/documents`);
           return;
         }
         
@@ -184,10 +188,8 @@ function CommonDashboard({ userType }) {
             <span className="text-xl font-bold text-[#4E84C1] dark:text-white">
               Edify
             </span>
-          </div>
-
-          {/* User Profile Preview */}
-          {userData && (
+          </div>          {/* User Profile Preview */}
+          {(userData || user) && (
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center space-x-4">
                 <div className="flex-shrink-0">
@@ -195,74 +197,19 @@ function CommonDashboard({ userType }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-semibold text-gray-900 dark:text-white truncate">
-                    {userData.Firstname} {userData.Lastname}
+                    {(userData || user).Firstname} {(userData || user).Lastname}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {userData.Email}
+                    {(userData || user).Email}
                   </p>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Navigation Links */}
+          )}          {/* Navigation Links */}
           <nav className="flex-1 px-4 pt-4 space-y-2 overflow-y-auto">
+            {/* Documents link - always visible */}
             <NavLink 
-              to="/"
-              className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439] transition-colors"
-            >
-              <FaHome className="h-4 w-4 mr-3" />
-              Home
-            </NavLink>
-
-            {/* Role-specific links */}
-            {userType === 'Student' ? (
-              <NavLink 
-                to={`/dashboard/student/${ID}/search`}
-                className={({isActive}) => 
-                  `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    isActive 
-                      ? "bg-[#4E84C1] text-white" 
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
-                  } transition-colors`
-                }
-              >
-                <FaUserGraduate className="h-4 w-4 mr-3" />
-                Find Teachers
-              </NavLink>
-            ) : (
-              <NavLink 
-                to={`/dashboard/teacher/${ID}/home`}
-                className={({isActive}) => 
-                  `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    isActive 
-                      ? "bg-[#4E84C1] text-white" 
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
-                  } transition-colors`
-                }
-              >
-                <FaHome className="h-4 w-4 mr-3" />
-                Dashboard
-              </NavLink>
-            )}
-
-            {/* Common links */}
-            <NavLink 
-              to={`/dashboard/${userType.toLowerCase()}/${ID}/classes`}
-              className={({isActive}) => 
-                `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                  isActive 
-                    ? "bg-[#4E84C1] text-white" 
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
-                } transition-colors`
-              }
-            >
-              <FaCalendarAlt className="h-4 w-4 mr-3" />
-              Classes
-            </NavLink>
-
-            <NavLink 
-              to={`/dashboard/${userType.toLowerCase()}/${ID}/courses`}
+              to={`/dashboard/${userType.toLowerCase()}/${ID}/documents`}
               className={({isActive}) => 
                 `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                   isActive 
@@ -272,8 +219,76 @@ function CommonDashboard({ userType }) {
               }
             >
               <FaBook className="h-4 w-4 mr-3" />
-              Courses
+              Documents
             </NavLink>
+
+            {/* Role-specific links */}            {/* Show links based on document verification status */}
+            {(userData || user)?.Isapproved === 'approved' && (
+              <>
+                {/* Home/Dashboard link */}
+                <NavLink 
+                  to={`/dashboard/${userType.toLowerCase()}/${ID}/home`}
+                  className={({isActive}) => 
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive 
+                        ? "bg-[#4E84C1] text-white" 
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
+                    } transition-colors`
+                  }
+                >
+                  <FaHome className="h-4 w-4 mr-3" />
+                  Dashboard
+                </NavLink>
+
+                {/* Student-specific links */}
+                {userType === 'Student' && (
+                  <NavLink 
+                    to={`/dashboard/student/${ID}/search`}
+                    className={({isActive}) => 
+                      `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                        isActive 
+                          ? "bg-[#4E84C1] text-white" 
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
+                      } transition-colors`
+                    }
+                  >
+                    <FaUserGraduate className="h-4 w-4 mr-3" />
+                    Find Teachers
+                  </NavLink>
+                )}
+              </>
+            )}            {/* Common links - only show when approved */}
+            {(userData || user)?.Isapproved === 'approved' && (
+              <>
+                <NavLink 
+                  to={`/dashboard/${userType.toLowerCase()}/${ID}/classes`}
+                  className={({isActive}) => 
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive 
+                        ? "bg-[#4E84C1] text-white" 
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
+                    } transition-colors`
+                  }
+                >
+                  <FaCalendarAlt className="h-4 w-4 mr-3" />
+                  Classes
+                </NavLink>
+
+                <NavLink 
+                  to={`/dashboard/${userType.toLowerCase()}/${ID}/courses`}
+                  className={({isActive}) => 
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive 
+                        ? "bg-[#4E84C1] text-white" 
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#042439]"
+                    } transition-colors`
+                  }
+                >
+                  <FaBook className="h-4 w-4 mr-3" />
+                  Courses
+                </NavLink>
+              </>
+            )}
           </nav>
 
           {/* Bottom Actions */}
