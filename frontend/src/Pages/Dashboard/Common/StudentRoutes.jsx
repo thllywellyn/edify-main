@@ -1,9 +1,9 @@
 import React from 'react';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
-import DocumentUploadTab from '../Components/DocumentUploadTab';
 import StudentDashboard from '../StudentDashboard/StudentDashboard';
 import StudentCourses from '../StudentDashboard/StudentCourses';
 import SearchTeacher from '../StudentDashboard/SearchTeacher';
+import DocumentVerificationTab from '../Components/DocumentVerificationTab';
 import { useAuth } from '../../../context/AuthContext';
 
 function StudentRoutes() {
@@ -20,7 +20,7 @@ function StudentRoutes() {
 
   return (
     <Routes>
-      <Route path="documents" element={<DocumentUploadTab userType="Student" />} />
+      <Route path="documents" element={<DocumentVerificationTab />} />
       <Route path="home" element={<StudentDashboard />} />
       <Route path="search" element={<SearchTeacher />} />
       <Route path="courses" element={<StudentCourses />} />

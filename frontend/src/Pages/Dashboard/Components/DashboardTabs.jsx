@@ -17,17 +17,49 @@ const DashboardTabs = ({ userType }) => {
 
   // Define tabs based on user type
   const studentTabs = [
-    { label: 'Documents', to: `/dashboard/student/${ID}/documents`, visibleWhen: ['pending', 'rejected', 'reupload', 'none'] },
-    { label: 'Home', to: `/dashboard/student/${ID}/home`, visibleWhen: ['approved'] },
-    { label: 'Search', to: `/dashboard/student/${ID}/search`, visibleWhen: ['approved'] },
-    { label: 'My Courses', to: `/dashboard/student/${ID}/courses`, visibleWhen: ['approved'] },
+    { 
+      label: 'Documents', 
+      to: `/dashboard/student/${ID}/documents`, 
+      visibleWhen: ['pending', 'rejected', 'reupload', 'none', 'approved'] 
+    },
+    { 
+      label: 'Home', 
+      to: `/dashboard/student/${ID}/home`, 
+      visibleWhen: ['approved'] 
+    },
+    { 
+      label: 'Search', 
+      to: `/dashboard/student/${ID}/search`, 
+      visibleWhen: ['approved'] 
+    },
+    { 
+      label: 'My Courses', 
+      to: `/dashboard/student/${ID}/courses`, 
+      visibleWhen: ['approved'] 
+    },
   ];
 
   const teacherTabs = [
-    { label: 'Documents', to: `/dashboard/teacher/${ID}/documents`, visibleWhen: ['pending', 'rejected', 'reupload', 'none'] },
-    { label: 'Home', to: `/dashboard/teacher/${ID}/home`, visibleWhen: ['approved'] },
-    { label: 'Courses', to: `/dashboard/teacher/${ID}/courses`, visibleWhen: ['approved'] },
-    { label: 'Classes', to: `/dashboard/teacher/${ID}/classes`, visibleWhen: ['approved'] },
+    { 
+      label: 'Documents', 
+      to: `/dashboard/teacher/${ID}/documents`, 
+      visibleWhen: ['pending', 'rejected', 'reupload', 'none', 'approved'] 
+    },
+    { 
+      label: 'Home', 
+      to: `/dashboard/teacher/${ID}/home`, 
+      visibleWhen: ['approved'] 
+    },
+    { 
+      label: 'Courses', 
+      to: `/dashboard/teacher/${ID}/courses`, 
+      visibleWhen: ['approved'] 
+    },
+    { 
+      label: 'Classes', 
+      to: `/dashboard/teacher/${ID}/classes`, 
+      visibleWhen: ['approved'] 
+    },
   ];
 
   const tabs = expectedUserType === 'student' ? studentTabs : teacherTabs;
