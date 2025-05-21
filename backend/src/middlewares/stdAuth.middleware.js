@@ -41,26 +41,28 @@ const authSTD = asyncHandler(async (req, _, next) => {
 
         // Define allowed routes for non-approved users
         const isVerificationRoute = req.path.includes('/Verification/');
-        const isDocumentUploadRoute = req.path.includes('/StudentDocument/') || req.path.includes('/dashboard/student/') && req.path.includes('/documents');
-        const isAllowedRoute = isVerificationRoute || isDocumentUploadRoute;
+        const isDocumentRoute = req.path.includes('/StudentDocument/') || 
+            req.path.includes('/dashboard/student/documents') || 
+            req.path.includes('/api/student/document/');
+        const isAllowedRoute = isVerificationRoute || isDocumentRoute;
 
-        // Handle re-upload and other non-approved states
-        if (Student.Isapproved === 'reupload' && !isAllowedRoute) {
-            throw new ApiError(401, "Your documents need to be re-uploaded. Please visit your dashboard to complete this process.");
-        }
-        
-        // For other non-approved statuses
-        if (Student.Isapproved !== 'approved' && !isAllowedRoute) {
-            if (Student.Isapproved === 'pending') {
-                throw new ApiError(401, "Your documents are under review. Please wait for approval.");
-            } else if (Student.Isapproved === 'rejected') {
-                throw new ApiError(401, "Your documents were rejected. Please check the remarks and resubmit.");
-            } else {
-                throw new ApiError(401, "Account not approved. Please complete document verification.");
+        // Handle document states with improved messaging
+        if (!Student.Isapproved || Student.Isapproved === 'reupload') {
+            if (!isAllowedRoute) {
+                if (Student.Isapproved === 'reupload') {
+                    throw new ApiError(403, "Please re-upload your documents to continue. You can access the document upload section.");
+                } else if (Student.Isapproved === 'pending') {
+                    throw new ApiError(403, "Your documents are under review. Document upload section is accessible.");
+                } else if (Student.Isapproved === 'rejected') {
+                    throw new ApiError(403, "Your documents were rejected. Please check remarks and resubmit in the document section.");
+                } else {
+                    throw new ApiError(403, "Please complete your document verification. Access granted to document section.");
+                }
             }
         }
 
-        req.Student = Student;
+        // Add user info to request
+        req.user = Student;
         next();
     } catch (error) {
         next(error);

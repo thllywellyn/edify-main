@@ -36,35 +36,48 @@ const StudentDocument = ({ userId }) => {
       }
 
       try {
+        setLoader(true);
         const response = await fetch(`/api/student/StudentDocument/${documentId}`, {
-          credentials: 'include' // Include cookies in the request
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          }
         });
         
-        if (response.status === 401) {
-          navigate('/login');
-          return;
+        if (response.status === 401 || response.status === 403) {
+          const errorData = await response.json();
+          setError(errorData.message || "Authentication error");
+          if (response.status === 401) {
+            // Token expired or invalid
+            navigate('/login');
+            return;
+          }
         }
         
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Failed to fetch data");
         }
-        
-        const user = await response.json();
-        if (!user.data) {
-          throw new Error("No user data found");
+
+        const responseData = await response.json();
+        setdata(responseData);
+        // Pre-fill form data if available
+        if (responseData.documentData) {
+          setFormData(prev => ({
+            ...prev,
+            ...responseData.documentData
+          }));
         }
-        
-        setdata(user.data);
-      } catch (error) {
-        setError(error.message);
-        if (error.message.includes("Failed to fetch") || error.message.includes("No user data")) {
-          navigate('/login');
-        }
+      } catch (err) {
+        setError(err.message || "Error loading document data");
+        console.error("Document fetch error:", err);
+      } finally {
+        setLoader(false);
       }
     };
+
     getData();
-  }, [Data, navigate]);
+  }, [documentId, navigate]);
 
   const handleFileChange = async (fileType, e) => {
     const file = e.target.files[0];
