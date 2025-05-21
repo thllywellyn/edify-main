@@ -38,7 +38,8 @@ const authTeacher = asyncHandler(async(req, _, next) => {
         const isVerificationRoute = req.path.includes('/verification/');
         const isDocumentRoute = req.path.includes('/TeacherDocument/') || 
             req.path.includes('/dashboard/teacher/documents') || 
-            req.path.includes('/api/teacher/document/');
+            req.path.includes('/api/teacher/document/') ||
+            req.path.includes('/api/teacher/verification/');
         const isAllowedRoute = isVerificationRoute || isDocumentRoute;
 
         // Set teacher info in request

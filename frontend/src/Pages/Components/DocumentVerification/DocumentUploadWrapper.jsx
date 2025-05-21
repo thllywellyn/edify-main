@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import StudentDocument from './StudentDocument';
-import TeacherDocument from './TeacherDocument';
+import UnifiedDocumentUpload from '../DocumentUpload/UnifiedDocumentUpload';
 
 const DocumentUploadWrapper = () => {
     const { user } = useAuth();
@@ -32,11 +31,7 @@ const DocumentUploadWrapper = () => {
 
     return (
         <div className="bg-[#042439] w-full rounded-lg shadow-xl">
-            {user.type === 'student' ? (
-                <StudentDocument userId={user._id} />
-            ) : (
-                <TeacherDocument userId={user._id} />
-            )}
+            <UnifiedDocumentUpload />
         </div>
     );
 };

@@ -8,7 +8,6 @@ import Courses from './Pages/Home/Courses/Courses'
 import Login from './Pages/Login/Login'
 import Signup from './Pages/Signup/Signup'
 import AdminLogin from './Pages/Login/AdminLogin'
-import StudentDocument from './Pages/Components/DocumentVerification/StudentDocument'
 import VarifyEmail from './Pages/Components/VarifyEmail/VarifyEmail'
 import Rejected from './Pages/Response/Rejected'
 import Pending from './Pages/Response/Pending'
@@ -42,10 +41,8 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
           <Route path="/varifyEmail" element={<VarifyEmail />} />
-          <Route path="/adminLogin" element={<AdminLogin />} />
-          <Route path="/rejected/:user/:ID" element={<Rejected />} />
+          <Route path="/adminLogin" element={<AdminLogin />} />          <Route path="/rejected/:user/:ID" element={<Rejected />} />
           <Route path="/pending" element={<Pending />} />
-          <Route path="/StudentDocument/:Data" element={<ProtectedRoute><StudentDocument /></ProtectedRoute>} />
 
           {/* Admin Routes */}
           <Route path="/admin/:data" element={<ProtectedRoute><Admin /></ProtectedRoute>}>
