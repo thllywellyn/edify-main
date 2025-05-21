@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../../../context/AuthContext";
 import Input from "../DocumentVerification/InputComponent/Input.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import { RotatingLines } from "react-loader-spinner";
 import logo from "../../Images/logo.svg";
 
-const TeacherDocument = () => {
+const TeacherDocument = ({ userId }) => {
   const [data, setData] = useState({});
   const [error, setError] = useState("");
   const { Data } = useParams();
+  const documentId = userId || Data; // Use passed userId or get from params
   const navigate = useNavigate();
   const [loader, setLoader] = useState(false);
   const [uploading, setUploading] = useState({});
@@ -15,7 +17,7 @@ const TeacherDocument = () => {
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await fetch(`/api/teacher/TeacherDocument/${Data}`);
+        const response = await fetch(`/api/teacher/TeacherDocument/${documentId}`);
         if (!response.ok) throw new Error("Failed to fetch data");
         const user = await response.json();
         setData(user.data);
@@ -24,7 +26,7 @@ const TeacherDocument = () => {
       }
     };
     getData();
-  }, [Data]);
+  }, [documentId]);
 
   const [formData, setFormData] = useState({
     Phone: "",
@@ -106,7 +108,7 @@ const TeacherDocument = () => {
     });
 
     try {
-      const response = await fetch(`/api/teacher/verification/${Data}`, {
+      const response = await fetch(`/api/teacher/verification/${documentId}`, {
         method: "POST",
         body: formDataObj
       });

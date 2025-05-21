@@ -3,7 +3,7 @@ import Input from "../DocumentVerification/InputComponent/Input.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import { RotatingLines } from "react-loader-spinner";
 import logo from "../../Images/logo.svg";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext";
 
 const StudentDocument = ({ userId }) => {
   const { user } = useAuth();
