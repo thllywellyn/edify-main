@@ -69,35 +69,32 @@ export default function Login() {
         const userData = responseData.data.user;
         await auth.login(userData, userType);
         return;
-      }
+      }        // For students
+        if (userType === 'student') {
+          // responseData.data contains the direct student object from backend
+          const studentData = responseData.data;
+          
+          if (!studentData || !studentData._id) {
+            throw new Error('Invalid response format');
+          }
 
-      // For students
-      if (userType === 'student') {
-        // responseData.data contains the direct student object from backend
-        const studentData = responseData.data;
-        
-        if (!studentData || !studentData._id) {
-          throw new Error('Invalid response format');
+          // Handle redirects based on verification and document status
+          if (studentData.needsVerification) {
+            navigate('/verify-email');
+            return;
+          }
+
+          // Login the student
+          await auth.login(studentData, userType);
+
+          // Route based on document verification status
+          if (!studentData.Studentdetails || 
+              ['pending', 'rejected', 'reupload'].includes(studentData.Isapproved)) {
+            navigate(`/dashboard/student/${studentData._id}/documents`);
+          } else {
+            navigate(`/dashboard/student/${studentData._id}/search`);
+          }
         }
-
-        // First login the student
-        await auth.login(studentData, userType);
-
-        // Then handle redirects based on verification status
-        if (studentData.needsVerification) {
-          navigate('/verify-email');
-          return;
-        }
-
-        if (!studentData.Studentdetails || 
-            ['pending', 'rejected', 'reupload'].includes(studentData.Isapproved)) {
-          navigate(`/dashboard/student/${studentData._id}/documents`);
-          return;
-        }
-
-        // If all checks pass, navigate to dashboard
-        navigate(`/dashboard/student/${studentData._id}/search`);
-      }
       
     } catch (error) {
       console.error('Login error:', error);

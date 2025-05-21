@@ -307,49 +307,44 @@ const getStudent = asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200, user, "Student is logged in"))
 })
-const addStudentDetails = asyncHandler(async(req, res)=>{
-
-    const id = req.params.id
+const addStudentDetails = asyncHandler(async(req, res) => {
+    const id = req.params.id;
     if(req.Student._id != id){
-        throw new ApiError(400,"not authorized ")
+        throw new ApiError(400, "unauthorized access");
     }
 
-    const {Phone, Address, Highesteducation, SecondarySchool, HigherSchool, SecondaryMarks, HigherMarks}  = req.body
+    const {
+        Phone, Address, Highesteducation, 
+        SecondarySchool, HigherSchool, 
+        SecondaryMarks, HigherMarks
+    } = req.body;
 
-    if ([Phone, Address, Highesteducation, SecondarySchool, HigherSchool, SecondaryMarks, HigherMarks].some((field) => field?.trim() === "")) {
+    if ([Phone, Address, Highesteducation, SecondarySchool, HigherSchool, SecondaryMarks, HigherMarks]
+        .some((field) => !field || field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
-    const alreadyExist = await studentdocs.findOne({Phone})
-
-    if(alreadyExist){
-        throw new ApiError(400, "phone number already exists")
-    }
-
     const AadhaarLocalPath = req.files?.Aadhaar?.[0]?.path;
-
     const SecondaryLocalPath = req.files?.Secondary?.[0]?.path;
+    const HigherLocalPath = req.files?.Higher?.[0]?.path;
 
-    const HigherLocalPath = req.files?.Higher?.[0]?.path
-
-    if(!AadhaarLocalPath){
-        throw new ApiError(400, "Aadhaar is required")
+    if(!AadhaarLocalPath || !SecondaryLocalPath || !HigherLocalPath){
+        throw new ApiError(400, "All documents are required");
     }
 
-    if(!SecondaryLocalPath){
-        throw new ApiError(400, "Secondary marksheet is required")
+    // Upload to cloudinary
+    const [Aadhaar, Secondary, Higher] = await Promise.all([
+        uploadOnCloudinary(AadhaarLocalPath),
+        uploadOnCloudinary(SecondaryLocalPath),
+        uploadOnCloudinary(HigherLocalPath)
+    ]);
+
+    if(!Aadhaar || !Secondary || !Higher) {
+        throw new ApiError(500, "Error while uploading documents");
     }
 
-    if(!HigherLocalPath){
-        throw new ApiError(400, "Higher marksheet is required")
-    }
-
-    const Aadhaar = await uploadOnCloudinary(AadhaarLocalPath)
-    const Secondary = await uploadOnCloudinary(SecondaryLocalPath)
-
-    const Higher = await uploadOnCloudinary(HigherLocalPath)
-
-    const studentdetails = await studentdocs.create({
+    // Create or update student documents
+    const documentData = {
         Phone,
         Address,
         Highesteducation,
@@ -359,23 +354,41 @@ const addStudentDetails = asyncHandler(async(req, res)=>{
         HigherMarks,
         Aadhaar: Aadhaar.url,
         Secondary: Secondary.url,
-        Higher: Higher.url,
-    })
+        Higher: Higher.url
+    };
 
+    let studentDocs;
+    if (req.Student.Studentdetails) {
+        // Update existing documents
+        studentDocs = await studentdocs.findByIdAndUpdate(
+            req.Student.Studentdetails,
+            documentData,
+            { new: true }
+        );
+    } else {
+        // Create new documents
+        studentDocs = await studentdocs.create(documentData);
+    }
 
-    //const loggedstd = await student.findByIdAndUpdate(id, {})
-
-    const theStudent = await student.findOneAndUpdate({_id: id}, {$set: {Isapproved:"pending", Studentdetails: studentdetails._id}},  { new: true }).select("-Password -Refreshtoken")
-    
+    // Update student status
+    const theStudent = await student.findOneAndUpdate(
+        {_id: id},
+        {
+            $set: {
+                Isapproved: "pending",
+                Studentdetails: studentDocs._id
+            }
+        },
+        { new: true }
+    ).select("-Password -Refreshtoken");
     
     if(!theStudent){
-        throw new ApiError(400,"faild to approve or reject || student not found")
+        throw new ApiError(400, "Failed to update student information");
     }
 
     return res
-    .status(200)
-    .json(new ApiResponse(200, theStudent, "documents uploaded successfully"))
-
+        .status(200)
+        .json(new ApiResponse(200, theStudent, "Documents uploaded successfully"));
 })
 
 

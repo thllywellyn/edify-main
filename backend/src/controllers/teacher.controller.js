@@ -209,18 +209,43 @@ const addTeacherDetails = asyncHandler(async(req, res) => {
     }
 
     const {
-        Phone, Address, Experience, SecondarySchool, 
-        HigherSchool, UGcollege, PGcollege, 
-        SecondaryMarks, HigherMarks, UGmarks, PGmarks,
-        Aadhaar, Secondary, Higher, UG, PG // These are now URLs
+        Phone, Address, Experience,
+        SecondarySchool, HigherSchool,
+        UGcollege, PGcollege,
+        SecondaryMarks, HigherMarks,
+        UGmarks, PGmarks
     } = req.body;
 
-    // Validation
-    if(!Aadhaar || !Secondary || !Higher || !UG || !PG) {
+    if ([Phone, Address, Experience, SecondarySchool, HigherSchool, UGcollege, PGcollege,
+         SecondaryMarks, HigherMarks, UGmarks, PGmarks].some((field) => !field || field?.trim() === "")) {
+        throw new ApiError(400, "All fields are required");
+    }
+
+    const AadhaarLocalPath = req.files?.Aadhaar?.[0]?.path;
+    const SecondaryLocalPath = req.files?.Secondary?.[0]?.path;
+    const HigherLocalPath = req.files?.Higher?.[0]?.path;
+    const UGLocalPath = req.files?.UG?.[0]?.path;
+    const PGLocalPath = req.files?.PG?.[0]?.path;
+
+    if(!AadhaarLocalPath || !SecondaryLocalPath || !HigherLocalPath || !UGLocalPath || !PGLocalPath){
         throw new ApiError(400, "All documents are required");
     }
 
-    const teacherdetails = await Teacherdocs.create({
+    // Upload to cloudinary
+    const [Aadhaar, Secondary, Higher, UG, PG] = await Promise.all([
+        uploadOnCloudinary(AadhaarLocalPath),
+        uploadOnCloudinary(SecondaryLocalPath),
+        uploadOnCloudinary(HigherLocalPath),
+        uploadOnCloudinary(UGLocalPath),
+        uploadOnCloudinary(PGLocalPath)
+    ]);
+
+    if(!Aadhaar || !Secondary || !Higher || !UG || !PG) {
+        throw new ApiError(500, "Error while uploading documents");
+    }
+
+    // Create or update teacher documents
+    const documentData = {
         Phone,
         Address,
         Experience,
@@ -232,24 +257,46 @@ const addTeacherDetails = asyncHandler(async(req, res) => {
         HigherMarks,
         UGmarks,
         PGmarks,
-        Aadhaar,
-        Secondary,
-        Higher,
-        UG,
-        PG
-    });
+        Aadhaar: Aadhaar.url,
+        Secondary: Secondary.url,
+        Higher: Higher.url,
+        UG: UG.url,
+        PG: PG.url
+    };
 
-    const theTeacher = await Teacher.findOneAndUpdate({_id: id}, {$set: {Isapproved:"pending", Teacherdetails: teacherdetails._id}},  { new: true }).select("-Password -Refreshtoken")
+    let teacherDocs;
+    if (req.teacher.Teacherdetails) {
+        // Update existing documents
+        teacherDocs = await Teacherdocs.findByIdAndUpdate(
+            req.teacher.Teacherdetails,
+            documentData,
+            { new: true }
+        );
+    } else {
+        // Create new documents
+        teacherDocs = await Teacherdocs.create(documentData);
+    }
+
+    // Update teacher status
+    const theTeacher = await Teacher.findOneAndUpdate(
+        {_id: id},
+        {
+            $set: {
+                Isapproved: "pending",
+                Teacherdetails: teacherDocs._id
+            }
+        },
+        { new: true }
+    ).select("-Password -Refreshtoken");
     
     if(!theTeacher){
-        throw new ApiError(400,"faild to approve or reject || student not found")
+        throw new ApiError(400, "Failed to update teacher information");
     }
 
     return res
-    .status(200)
-    .json(new ApiResponse(200, {teacher:theTeacher}, "documents uploaded successfully"))
-
-})
+        .status(200)
+        .json(new ApiResponse(200, theTeacher, "Documents uploaded successfully"));
+});
 
 const teacherdocuments = asyncHandler(async(req, res)=>{
     const teacherID = req.params.id || req.body.teacherID;

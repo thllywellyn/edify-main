@@ -46,23 +46,19 @@ const authSTD = asyncHandler(async (req, _, next) => {
             req.path.includes('/api/student/document/');
         const isAllowedRoute = isVerificationRoute || isDocumentRoute;
 
-        // Handle document states with improved messaging
-        if (!Student.Isapproved || Student.Isapproved === 'reupload') {
-            if (!isAllowedRoute) {
-                if (Student.Isapproved === 'reupload') {
-                    throw new ApiError(403, "Please re-upload your documents to continue. You can access the document upload section.");
-                } else if (Student.Isapproved === 'pending') {
-                    throw new ApiError(403, "Your documents are under review. Document upload section is accessible.");
-                } else if (Student.Isapproved === 'rejected') {
-                    throw new ApiError(403, "Your documents were rejected. Please check remarks and resubmit in the document section.");
-                } else {
-                    throw new ApiError(403, "Please complete your document verification. Access granted to document section.");
-                }
-            }
+        // Set student info in request
+        req.Student = Student;
+
+        // Allow document routes for all states
+        if (isAllowedRoute) {
+            return next();
         }
 
-        // Add user info to request
-        req.user = Student;
+        // Handle document states
+        if (!Student.Isapproved || ['pending', 'rejected', 'reupload'].includes(Student.Isapproved)) {
+            throw new ApiError(403, `Please complete your document verification. Current status: ${Student.Isapproved || 'not submitted'}`);
+        }
+
         next();
     } catch (error) {
         next(error);

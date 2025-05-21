@@ -27,14 +27,33 @@ const authTeacher = asyncHandler(async(req, _, next) => {
             throw error;
         }
 
-        const teacher = await Teacher.findById(decodedToken._id)
+        const Teacher = await Teacher.findById(decodedToken._id)
             .select("-Password -Refreshtoken");
 
-        if (!teacher) {
+        if (!Teacher) {
             throw new ApiError(401, "Teacher account not found");
         }
 
-        req.teacher = teacher;
+        // Define allowed routes for non-approved users
+        const isVerificationRoute = req.path.includes('/verification/');
+        const isDocumentRoute = req.path.includes('/TeacherDocument/') || 
+            req.path.includes('/dashboard/teacher/documents') || 
+            req.path.includes('/api/teacher/document/');
+        const isAllowedRoute = isVerificationRoute || isDocumentRoute;
+
+        // Set teacher info in request
+        req.teacher = Teacher;
+
+        // Allow document routes for all states
+        if (isAllowedRoute) {
+            return next();
+        }
+
+        // Handle document states
+        if (!Teacher.Isapproved || ['pending', 'rejected', 'reupload'].includes(Teacher.Isapproved)) {
+            throw new ApiError(403, `Please complete your document verification. Current status: ${Teacher.Isapproved || 'not submitted'}`);
+        }
+
         next();
     } catch (error) {
         next(error);

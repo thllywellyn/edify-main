@@ -10,10 +10,21 @@ function StudentRoutes() {
   const { user } = useAuth();
   const { ID } = useParams();
 
+  // Check if user exists and is authenticated
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Ensure we have an ID
+  if (!ID) {
+    return <Navigate to={`/dashboard/student/${user._id}/documents`} replace />;
+  }
+
   // If user needs to upload/re-upload documents, redirect to documents tab
   const needsDocuments = !user?.Studentdetails || 
     ['pending', 'rejected', 'reupload'].includes(user?.Isapproved);
 
+  // Only redirect to documents if not already there and documents are needed
   if (needsDocuments && !window.location.pathname.includes('/documents')) {
     return <Navigate to={`/dashboard/student/${ID}/documents`} replace />;
   }

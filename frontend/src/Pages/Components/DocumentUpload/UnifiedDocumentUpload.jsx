@@ -111,17 +111,58 @@ const UnifiedDocumentUpload = () => {
         const response = await fetch(endpoint, {
           credentials: 'include',
           headers: {
-                      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-                    }
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          }
         });
 
-        if (!response.ok) throw new Error('Failed to fetch existing data');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to fetch data');
+        }
 
         const data = await response.json();
-        // Map the received data to our form structure
-        // ... implementation depends on your API response structure
+        const documents = user.type === 'student' ? data.documentData : data.data.documents;
+
+        if (documents) {
+          setFormData(prev => ({
+            ...prev,
+            basicInfo: {
+              phone: documents.Phone || '',
+              address: documents.Address || ''
+            },
+            education: {
+              secondary: {
+                ...prev.education.secondary,
+                school: documents.SecondarySchool || '',
+                marks: documents.SecondaryMarks || ''
+              },
+              higher: {
+                ...prev.education.higher,
+                school: documents.HigherSchool || '',
+                marks: documents.HigherMarks || ''
+              }
+            }
+          }));
+
+          if (user.type === 'teacher') {
+            setTeacherFields(prev => ({
+              ...prev,
+              experience: documents.Experience || '',
+              graduation: {
+                ...prev.graduation,
+                college: documents.UGcollege || '',
+                marks: documents.UGmarks || ''
+              },
+              postGraduation: {
+                ...prev.postGraduation,
+                college: documents.PGcollege || '',
+                marks: documents.PGmarks || ''
+              }
+            }));
+          }
+        }
       } catch (error) {
-        setError('Failed to load existing data');
+        setError('Failed to load existing data: ' + error.message);
         console.error('Error:', error);
       }
     };
@@ -209,58 +250,72 @@ const UnifiedDocumentUpload = () => {
       const formDataObj = new FormData();
       
       // Append basic info
-      Object.entries(formData.basicInfo).forEach(([key, value]) => {
-        formDataObj.append(key, value);
-      });
+      formDataObj.append('Phone', formData.basicInfo.phone);
+      formDataObj.append('Address', formData.basicInfo.address);
 
       // Append education details
-      ['secondary', 'higher'].forEach(level => {
-        formDataObj.append(`${level}School`, formData.education[level].school);
-                formDataObj.append(`${level}Marks`, formData.education[level].marks);
-                if (formData.education[level].certificate) {
-                  formDataObj.append(level, formData.education[level].certificate);
-                }
-      });
-
-      // Append Aadhaar
-      if (formData.additional.aadhaar) {
-        formDataObj.append('Aadhaar', formData.additional.aadhaar);
+      formDataObj.append('SecondarySchool', formData.education.secondary.school);
+      formDataObj.append('HigherSchool', formData.education.higher.school);
+      formDataObj.append('SecondaryMarks', formData.education.secondary.marks);
+      formDataObj.append('HigherMarks', formData.education.higher.marks);
+      
+      // Append required documents
+      if (!formData.education.secondary.certificate || 
+          !formData.education.higher.certificate || 
+          !formData.additional.aadhaar) {
+        throw new Error('Please upload all required documents');
       }
 
-      // Add teacher-specific fields if applicable
+      formDataObj.append('Aadhaar', formData.additional.aadhaar);
+      formDataObj.append('Secondary', formData.education.secondary.certificate);
+      formDataObj.append('Higher', formData.education.higher.certificate);
+
+      // For students
+      if (user.type === 'student') {
+        formDataObj.append('Highesteducation', formData.education.higher.school);
+      }
+
+      // For teachers
       if (user.type === 'teacher') {
+        if (!teacherFields.graduation.certificate || !teacherFields.postGraduation.certificate) {
+          throw new Error('Please upload all required certificates');
+        }
+
         formDataObj.append('Experience', teacherFields.experience);
-                ['graduation', 'postGraduation'].forEach(level => {
-                  formDataObj.append(`${level}College`, teacherFields[level].college);
-                  formDataObj.append(`${level}Marks`, teacherFields[level].marks);
-                  if (teacherFields[level].certificate) {
-                    formDataObj.append(level === 'graduation' ? 'UG' : 'PG', teacherFields[level].certificate);
-                  }
-                });
+        formDataObj.append('UGcollege', teacherFields.graduation.college);
+        formDataObj.append('PGcollege', teacherFields.postGraduation.college);
+        formDataObj.append('UGmarks', teacherFields.graduation.marks);
+        formDataObj.append('PGmarks', teacherFields.postGraduation.marks);
+        formDataObj.append('UG', teacherFields.graduation.certificate);
+        formDataObj.append('PG', teacherFields.postGraduation.certificate);
       }
 
       const endpoint = user.type === 'student'
-              ? `/api/student/Verification/${user._id}`
-              : `/api/teacher/verification/${user._id}`;
+        ? `/api/student/Verification/${user._id}`
+        : `/api/teacher/verification/${user._id}`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
         body: formDataObj
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to upload documents');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to upload documents');
       }
 
-      setSuccessMessage('Documents uploaded successfully');
+      setSuccessMessage('Documents uploaded successfully!');
       setTimeout(() => {
         window.location.reload();
-      }, 2000);
+      }, 1500);
 
     } catch (error) {
       setError(error.message);
+      console.error('Upload error:', error);
     } finally {
       setLoading(false);
     }
